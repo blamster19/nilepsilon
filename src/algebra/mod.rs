@@ -47,11 +47,37 @@ impl ops::Sub for Vector {
 }
 
 //scalar product
-impl ops::Mul for Vector {
+impl ops::Mul<Vector> for Vector {
 	type Output = Coord;
 
 	fn mul(self, other: Self) ->  Coord{
 		self.x * other.x + self.y * other.y + self.z * other.z
+	}
+}
+
+//multiply by scalar
+impl ops::Mul<Coord> for Vector {
+	type Output = Vector;
+
+	fn mul(self, k: Coord) -> Vector {
+		Vector {
+			x: self.x * k,
+			y: self.y * k,
+			z: self.z * k,
+		}
+	}
+}
+
+//divide by scalar
+impl ops::Div<Coord> for Vector {
+	type Output = Vector;
+
+	fn div(self, k: Coord) -> Vector {
+		Vector {
+			x: self.x / k,
+			y: self.y / k,
+			z: self.z / k,
+		}
 	}
 }
 
@@ -84,5 +110,9 @@ impl Vector {
 
 	fn norm(self) -> Coord {	
 		(self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
+	}
+
+	fn normalize(self) -> Vector {
+		self/self.norm()
 	}
 }

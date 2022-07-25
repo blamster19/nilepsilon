@@ -76,3 +76,13 @@ impl cmp::PartialEq for Vector {
 		float_eq::float_eq!(self.z, other.z, rmax <= Coord::EPSILON)
 	}
 }
+
+impl Vector {
+	fn norm_sqr(self) -> Coord {
+		self.x * self.x + self.y * self.y + self.z * self.z
+	}
+
+	fn norm(self) -> Coord {	
+		(self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
+	}
+}

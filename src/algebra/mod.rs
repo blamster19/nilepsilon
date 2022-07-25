@@ -5,7 +5,7 @@ use float_eq;
 //might want to change to something more/less precise depending on use case
 pub type Coord = f64;
 
-#[derive(Default, Clone, Debug)]
+#[derive(Default, Clone, Debug, Copy)]
 pub struct Vector {
 	pub x: Coord,
 	pub y: Coord,

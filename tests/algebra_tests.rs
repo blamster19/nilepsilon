@@ -75,7 +75,7 @@ fn vector_div_by_scalar() {
 
 #[test]
 fn vector_norm() {
-	let v3 = (14.0 as algebra::Coord).sqrt();
+	let v3 = (14.0 as algebra::Scalar).sqrt();
 	let result = v1.norm();
 	assert_eq!(result, v3);
 }

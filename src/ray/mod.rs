@@ -14,7 +14,7 @@ impl Ray {
 		}
 	}
 
-	pub fn point_on_line(&self, t: algebra::Coord) -> algebra::Vector {
+	pub fn point_on_line(&self, t: algebra::Scalar) -> algebra::Vector {
 		self.orig + t * self.dir
 	}
 }

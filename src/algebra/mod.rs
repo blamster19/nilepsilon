@@ -3,17 +3,17 @@ use std::cmp;
 use float_eq;
 
 //might want to change to something more/less precise depending on use case
-pub type Coord = f64;
+pub type Scalar = f64;
 
 #[derive(Default, Clone, Debug, Copy)]
 pub struct Vector {
-	pub x: Coord,
-	pub y: Coord,
-	pub z: Coord,
+	pub x: Scalar,
+	pub y: Scalar,
+	pub z: Scalar,
 }
 
 impl Vector {
-	fn new(x: Coord, y: Coord, z: Coord) -> Vector {
+	fn new(x: Scalar, y: Scalar, z: Scalar) -> Vector {
 		Vector {
 			x,
 			y,
@@ -48,19 +48,19 @@ impl ops::Sub for Vector {
 
 //scalar product
 impl ops::Mul<Vector> for Vector {
-	type Output = Coord;
+	type Output = Scalar;
 
-	fn mul(self, other: Self) ->  Coord{
+	fn mul(self, other: Self) ->  Scalar{
 		self.x * other.x + self.y * other.y + self.z * other.z
 	}
 }
 
 //multiply by scalar
-//Vector * Coord
-impl ops::Mul<Coord> for Vector {
+//Vector * Scalar
+impl ops::Mul<Scalar> for Vector {
 	type Output = Self;
 
-	fn mul(self, k: Coord) -> Self::Output {
+	fn mul(self, k: Scalar) -> Self::Output {
 		Self {
 			x: self.x * k,
 			y: self.y * k,
@@ -69,8 +69,8 @@ impl ops::Mul<Coord> for Vector {
 	}
 }
 
-//Coord * Vector
-impl ops::Mul<Vector> for Coord {
+//Scalar * Vector
+impl ops::Mul<Vector> for Scalar {
 	type Output = Vector;
 
 	fn mul(self, v: Vector) -> Self::Output {
@@ -83,10 +83,10 @@ impl ops::Mul<Vector> for Coord {
 }
 
 //divide by scalar
-impl ops::Div<Coord> for Vector {
+impl ops::Div<Scalar> for Vector {
 	type Output = Self;
 
-	fn div(self, k: Coord) -> Self::Output {
+	fn div(self, k: Scalar) -> Self::Output {
 		Self {
 			x: self.x / k,
 			y: self.y / k,
@@ -111,18 +111,18 @@ impl ops::Rem for Vector {
 //equality
 impl cmp::PartialEq for Vector {
 	fn eq(&self, other: &Self) -> bool {
-		float_eq::float_eq!(self.x, other.x, rmax <= Coord::EPSILON) &&
-		float_eq::float_eq!(self.y, other.y, rmax <= Coord::EPSILON) &&
-		float_eq::float_eq!(self.z, other.z, rmax <= Coord::EPSILON)
+		float_eq::float_eq!(self.x, other.x, rmax <= Scalar::EPSILON) &&
+		float_eq::float_eq!(self.y, other.y, rmax <= Scalar::EPSILON) &&
+		float_eq::float_eq!(self.z, other.z, rmax <= Scalar::EPSILON)
 	}
 }
 
 impl Vector {
-	pub fn norm_sqr(self) -> Coord {
+	pub fn norm_sqr(self) -> Scalar {
 		self.x * self.x + self.y * self.y + self.z * self.z
 	}
 
-	pub fn norm(self) -> Coord {
+	pub fn norm(self) -> Scalar {
 		(self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
 	}
 

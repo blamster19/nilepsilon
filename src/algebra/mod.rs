@@ -56,11 +56,12 @@ impl ops::Mul<Vector> for Vector {
 }
 
 //multiply by scalar
+//Vector * Coord
 impl ops::Mul<Coord> for Vector {
-	type Output = Vector;
+	type Output = Self;
 
-	fn mul(self, k: Coord) -> Vector {
-		Vector {
+	fn mul(self, k: Coord) -> Self::Output {
+		Self {
 			x: self.x * k,
 			y: self.y * k,
 			z: self.z * k,
@@ -68,12 +69,25 @@ impl ops::Mul<Coord> for Vector {
 	}
 }
 
-//divide by scalar
-impl ops::Div<Coord> for Vector {
+//Coord * Vector
+impl ops::Mul<Vector> for Coord {
 	type Output = Vector;
 
-	fn div(self, k: Coord) -> Vector {
+	fn mul(self, v: Vector) -> Self::Output {
 		Vector {
+			x: v.x * self,
+			y: v.y * self,
+			z: v.z * self,
+		}
+	}
+}
+
+//divide by scalar
+impl ops::Div<Coord> for Vector {
+	type Output = Self;
+
+	fn div(self, k: Coord) -> Self::Output {
+		Self {
 			x: self.x / k,
 			y: self.y / k,
 			z: self.z / k,

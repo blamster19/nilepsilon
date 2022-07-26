@@ -118,15 +118,15 @@ impl cmp::PartialEq for Vector {
 }
 
 impl Vector {
-	fn norm_sqr(self) -> Coord {
+	pub fn norm_sqr(self) -> Coord {
 		self.x * self.x + self.y * self.y + self.z * self.z
 	}
 
-	fn norm(self) -> Coord {	
+	pub fn norm(self) -> Coord {
 		(self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
 	}
 
-	fn normalize(self) -> Vector {
+	pub fn normalize(self) -> Vector {
 		self/self.norm()
 	}
 }

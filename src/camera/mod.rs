@@ -75,7 +75,7 @@ impl Camera {
 				ul_corner: algebra::Vector::new(
 					-(hstep * (canvas_pix_width) as algebra::Scalar)/2.0,
 					focal_length,
-					-(vstep * (canvas_pix_height) as algebra::Scalar)/2.0,
+					(vstep * (canvas_pix_height) as algebra::Scalar)/2.0,
 					),
 				horizontal_step: hstep,
 				vertical_step: vstep,

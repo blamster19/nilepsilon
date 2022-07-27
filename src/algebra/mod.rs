@@ -13,7 +13,7 @@ pub struct Vector {
 }
 
 impl Vector {
-	fn new(x: Scalar, y: Scalar, z: Scalar) -> Vector {
+	pub fn new(x: Scalar, y: Scalar, z: Scalar) -> Vector {
 		Vector {
 			x,
 			y,

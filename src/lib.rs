@@ -2,3 +2,4 @@ pub mod output;
 pub mod algebra;
 pub mod ray;
 pub mod camera;
+pub mod primitives;

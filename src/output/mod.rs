@@ -11,8 +11,8 @@ pub enum Format {
 }
 
 pub struct ImageFile {
-	width: u32,
-	height: u32,
+	pub width: u32,
+	pub height: u32,
 	image: Vec<Pixel>,
 }
 

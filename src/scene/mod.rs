@@ -1,16 +1,16 @@
 use crate::primitives;
 use crate::camera;
 
-pub enum Primitive_type {
+pub enum PrimitiveType {
 	Sphere(primitives::Sphere),
 }
 
-pub enum Background_type {
-	solid_color((f64, f64, f64)),
+pub enum BackgroundType {
+	SolidColor((f64, f64, f64)),
 }
 
 pub struct Scene {
-	objects: Vec<Primitive_type>,
+	objects: Vec<PrimitiveType>,
 	camera: camera::Camera,
-	background: Background_type,
+	background: BackgroundType,
 }

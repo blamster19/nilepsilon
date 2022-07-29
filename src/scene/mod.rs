@@ -10,7 +10,7 @@ pub enum BackgroundType {
 }
 
 pub struct Scene {
-	objects: Vec<PrimitiveType>,
-	camera: camera::Camera,
-	background: BackgroundType,
+	pub objects: Vec<PrimitiveType>,
+	pub camera: camera::Camera,
+	pub background: BackgroundType,
 }

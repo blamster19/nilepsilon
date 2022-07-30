@@ -1,11 +1,7 @@
 use crate::algebra;
 use crate::ray;
 
-enum Intersection {
-	Hit(algebra::Vector),
-	Miss(algebra::Vector),
-}
-
+#[derive(Clone, Copy)]
 pub enum Primitive {
 	Sphere {
 		position: algebra::Vector,
@@ -14,7 +10,7 @@ pub enum Primitive {
 }
 
 impl Primitive {
-	pub fn intersect(&self, ray: ray::Ray) -> bool {
+	pub fn intersect(&self, ray: ray::Ray, min_d: algebra::Scalar, max_d: algebra::Scalar) -> std::option::Option<algebra::Vector> {
 		match self {
 			Primitive::Sphere { position, radius } => {
 				let orig_to_center: algebra::Vector = ray.orig - *position;
@@ -22,7 +18,29 @@ impl Primitive {
 				let b = 2.0 * orig_to_center * ray.dir;
 				let c = orig_to_center.norm_sqr() - radius * radius;
 				let delta = b * b - 4.0 * a * c;
-				delta > 0.0
+				if delta < 0.0 {
+					std::option::Option::None
+				} else {
+					let mut t: algebra::Scalar = (-b - delta.sqrt()) / 2.0 / a;
+					if t < min_d || t > max_d {
+						t = (-b + delta.sqrt()) / 2.0 / a;
+						if t < min_d || t > max_d {
+							std::option::Option::None
+						} else {
+							std::option::Option::Some(ray.point_on_line(t))
+						}
+					} else {
+						std::option::Option::Some(ray.point_on_line(t))
+					}
+				}
+			}
+		}
+	}
+
+	pub fn normal(&self, point: algebra::Vector) -> algebra::Vector {
+		match self {
+			Primitive::Sphere { position, radius } => {
+				(point - *position).normalize()
 			}
 		}
 	}

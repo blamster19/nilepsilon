@@ -40,3 +40,18 @@ fn output_color_wheels() {
 	}
 	img.out(output::Format::PPM);
 }
+
+#[test]
+fn output_corner() {
+	let mut img = output::ImageFile::new(640,480);
+	for x in (0..640).rev() {
+		for y in 0..480 {
+			if x < 50 && y < 50 {
+				img.set_pixel(x, y, (1.0, 1.0, 1.0));
+			} else {
+				img.set_pixel(x, y, (0.0, 0.0, 0.0));
+			}
+		}
+	}
+	img.out(output::Format::PPM);
+}

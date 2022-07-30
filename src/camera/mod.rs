@@ -21,8 +21,8 @@ pub struct Camera {
 	//upper left canvas corner position
 	pub ul_corner: algebra::Vector,
 	//horizontal and vertical distance between canvas pixels in physical space
-	pub horizontal_step: algebra::Scalar,
-	pub vertical_step: algebra::Scalar,
+	pub horizontal_step: algebra::Vector,
+	pub vertical_step: algebra::Vector,
 }
 
 impl Camera {
@@ -77,8 +77,8 @@ impl Camera {
 					focal_length,
 					(vstep * (canvas_pix_height) as algebra::Scalar)/2.0,
 					),
-				horizontal_step: hstep,
-				vertical_step: vstep,
+				horizontal_step: algebra::Vector::new(hstep, 0.0, 0.0),
+				vertical_step: algebra::Vector::new(0.0, 0.0, vstep),
 			}
 		}
 }

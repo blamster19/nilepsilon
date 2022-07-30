@@ -26,7 +26,7 @@ impl ImageFile {
 	}
 
 	pub fn set_pixel (&mut self, x: u32, y: u32, value: (f64, f64, f64)) {
-		let index = (x*self.width+y) as usize;
+		let index = (y*self.width+x) as usize;
 		self.image[index].r = value.0;
 		self.image[index].g = value.1;
 		self.image[index].b = value.2;

@@ -31,13 +31,13 @@ impl Camera {
 		canvas_pix_height: u32,
 		) -> Camera {
 			if focal_length <= 0.0 {
-				panic!("Camera property `focal_length` must be greater than or equal to  0.0, got {}", min_clip);
+				panic!("Camera property `focal_length` must be greater than or equal to  0.0, got {}", focal_length);
 			}
 			if sensor_width < 0.0 {
-				panic!("Camera property `sensor_width` must be greater than 0.0, got {}", min_clip);
+				panic!("Camera property `sensor_width` must be greater than 0.0, got {}", sensor_width);
 			}
 			if sensor_height < 0.0 {
-				panic!("Camera property `sensor_height` must be greater than 0.0, got {}", min_clip);
+				panic!("Camera property `sensor_height` must be greater than 0.0, got {}", sensor_height);
 			}
 			let hstep: algebra::Scalar = sensor_width/(canvas_pix_width) as algebra::Scalar;
 			let vstep: algebra::Scalar = sensor_height/(canvas_pix_height) as algebra::Scalar;

@@ -1,6 +1,7 @@
 use crate::algebra;
 use crate::ray;
 use crate::camera;
+use crate::primitives;
 use crate::output;
 use crate::scene;
 
@@ -20,14 +21,37 @@ impl Renderer {
 
 	fn trace(&self, x: u32, y: u32) -> (f64, f64, f64) {
 		let camera: &camera::Camera = &self.scene.camera;
-		//temporary rendering: black - no hit, white - hit
-		let mut c: (f64, f64, f64) = (0.0, 0.0, 0.0);
+		let mut biggest_distance: algebra::Scalar = algebra::Scalar::MAX;
+		let mut closest_obj: std::option::Option<primitives::Primitive> = std::option::Option::None;
+		let camera_plane_vector: algebra::Vector = (camera.ul_corner + (x as f64) * camera.horizontal_step - (y as f64) * camera.vertical_step).normalize();
+		let mut d: algebra::Scalar = biggest_distance;
+		let mut normal: algebra::Vector = algebra::Vector::new(0.0, 0.0, 0.0);
+
+		let primary_ray = ray::Ray::new(algebra::Vector::new(0.0, 0.0, 0.0), camera_plane_vector);
 		for obj in &self.scene.objects {
-			let camera_plane_vector: algebra::Vector = (camera.ul_corner + (x as f64) * camera.horizontal_step - (y as f64) * camera.vertical_step).normalize();
-			if obj.intersect(ray::Ray::new(algebra::Vector::new(0.0, 0.0, 0.0), camera_plane_vector)) {
-				c = (1.0, 1.0, 1.0);
+			match obj.intersect(primary_ray, camera.min_clip, camera.max_clip) {
+				std::option::Option::Some(point) => {
+					let normsq = (point - camera_plane_vector).norm_sqr();
+					if normsq < d {
+						d = normsq;
+						closest_obj = std::option::Option::Some(*obj);
+						normal = obj.normal(point);
+					}
+				}
+				std::option::Option::None => {
+					continue;
+				}
 			}
 		}
-		c
+
+		match closest_obj {
+			std::option::Option::None => {
+				(0.0, 0.0, 0.0)
+			}
+			std::option::Option::Some(object) => {
+				//objects normal
+				(normal.x, normal.y, normal.z)
+			}
+		}
 	}
 }

@@ -7,8 +7,8 @@ enum Intersection {
 }
 
 pub struct Sphere {
-	position: algebra::Vector,
-	radius: algebra::Scalar,
+	pub position: algebra::Vector,
+	pub radius: algebra::Scalar,
 }
 
 impl Sphere {

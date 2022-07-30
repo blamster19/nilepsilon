@@ -14,7 +14,7 @@ pub enum Primitive {
 }
 
 impl Primitive {
-	pub fn intersect(&self, ray: ray::Ray, min_d: algebra::Scalar, max_d: algebra::Scalar) -> std::option::Option<algebra::Vector> {
+	pub fn intersect(&self, ray: &ray::Ray, min_d: algebra::Scalar, max_d: algebra::Scalar) -> std::option::Option<algebra::Vector> {
 		match self {
 			Primitive::Sphere { position, radius } => {
 				let orig_to_center: algebra::Vector = ray.orig - *position;

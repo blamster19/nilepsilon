@@ -6,11 +6,7 @@ pub enum Lens {
 
 pub struct Camera {
 	pub lens_type: Lens,
-	pub min_clip: algebra::Scalar,
-	pub max_clip: algebra::Scalar,
-	pub focal_distance: algebra::Scalar,
 
-	pupil_radius: algebra::Scalar,
 	focal_length: algebra::Scalar,
 
 	pub sensor_width: algebra::Scalar,
@@ -28,28 +24,12 @@ pub struct Camera {
 impl Camera {
 	pub fn new(
 		lens_type: Lens,
-		min_clip: algebra::Scalar,
-		max_clip: algebra::Scalar,
-		focal_distance: algebra::Scalar,
-		pupil_radius: algebra::Scalar,
 		focal_length: algebra::Scalar,
 		sensor_width: algebra::Scalar,
 		sensor_height: algebra::Scalar,
 		canvas_pix_width: u32,
 		canvas_pix_height: u32,
 		) -> Camera {
-			if min_clip <= 0.0 {
-				panic!("Camera property `min_clip` must be greater than or equal to  0.0, got {}", min_clip);
-			}
-			if max_clip <= 0.0 {
-				panic!("Camera property `max_clip` must be greater than or equal to 0.0, got {}", min_clip);
-			}
-			if focal_distance <= 0.0 {
-				panic!("Camera property `focal_distance` must be greater than or equal to 0.0, got {}", min_clip);
-			}
-			if pupil_radius <= 0.0 {
-				panic!("Camera property `pupil_radius` must be greater than or equal 0.0, got {}", min_clip);
-			}
 			if focal_length <= 0.0 {
 				panic!("Camera property `focal_length` must be greater than or equal to  0.0, got {}", min_clip);
 			}
@@ -63,10 +43,6 @@ impl Camera {
 			let vstep: algebra::Scalar = sensor_height/(canvas_pix_height) as algebra::Scalar;
 			Camera {
 				lens_type,
-				min_clip,
-				max_clip,
-				focal_distance,
-				pupil_radius,
 				focal_length,
 				sensor_width,
 				sensor_height,

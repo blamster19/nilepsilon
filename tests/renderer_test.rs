@@ -62,3 +62,31 @@ fn renderer_overlapping_spheres_raster() {
 	dis.render();
 	dis.output.out(output::Format::PPM);
 }
+
+#[test]
+fn renderer_sphere_plane_raster() {
+	let cam = camera::Camera::new(
+		camera::Lens::Perspective,
+		0.035,
+		0.064,
+		0.048,
+		640,
+		480,
+		0.0,
+		1000.0,
+		);
+	let sph1 = primitives::Primitive::Sphere {position: algebra::Vector::new(0.0, 2.0, 0.0), radius: 1.0};
+	let pln1 = primitives::Primitive::Plane {position: algebra::Vector::new(0.0, 0.0, -0.5), normal: algebra::Vector::new(0.0, 0.0, 1.0)};
+	let sc = scene::Scene {
+		objects:vec![sph1, pln1],
+		camera: cam,
+		background: scene::BackgroundType::SolidColor((0.5, 0.5, 0.5)),
+		};
+	let img = output::ImageFile::new(640, 480);
+	let mut dis = renderer::Renderer {
+		scene: sc,
+		output: img,
+	};
+	dis.render();
+	dis.output.out(output::Format::PPM);
+}

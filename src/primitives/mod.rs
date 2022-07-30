@@ -6,6 +6,10 @@ pub enum Primitive {
 	Sphere {
 		position: algebra::Vector,
 		radius: algebra::Scalar,
+	},
+	Plane {
+		position: algebra::Vector,
+		normal: algebra::Vector,
 	}
 }
 
@@ -34,6 +38,20 @@ impl Primitive {
 					}
 				}
 			}
+
+			Primitive::Plane { position, normal } => {
+				let divisor: algebra::Scalar = (*normal) * ray.dir;
+				if divisor == 0.0 {
+					std::option::Option::None
+				} else {
+					let t: algebra::Scalar = ((*position - ray.orig) * (*normal)) / divisor;
+					if t < min_d || t > max_d {
+						std::option::Option::None
+					} else {
+						std::option::Option::Some(ray.point_on_line(t))
+					}
+				}
+			}
 		}
 	}
 
@@ -41,6 +59,10 @@ impl Primitive {
 		match self {
 			Primitive::Sphere { position, radius } => {
 				(point - *position).normalize()
+			}
+
+			Primitive::Plane { position, normal } => {
+				(point - *normal).normalize()
 			}
 		}
 	}

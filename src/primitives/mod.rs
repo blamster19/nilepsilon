@@ -10,7 +10,12 @@ pub enum Primitive {
 	Plane {
 		position: algebra::Vector,
 		normal: algebra::Vector,
-	}
+	},
+	Triangle {
+		v1: algebra::Vector,
+		v2: algebra::Vector,
+		v3: algebra::Vector,
+	},
 }
 
 impl Primitive {
@@ -52,6 +57,41 @@ impl Primitive {
 					}
 				}
 			}
+
+			Primitive::Triangle { v1, v2, v3 } => {
+				//does ray intersect the triangle's plane at all
+				let a: algebra::Vector = *v2 - *v1;
+				let b: algebra::Vector = *v3 - *v1;
+				let normal: algebra::Vector = (a % b).normalize();
+
+				let tri_plane = Primitive::Plane { position: *v1, normal: normal };
+				match tri_plane.intersect(ray, min_d, max_d) {
+					std::option::Option::None => {
+						std::option::Option::None
+					}
+					std::option::Option::Some(point) => {
+						//convert to barycentric
+						let c: algebra::Vector = point - *v1;
+						let d_aa: algebra::Scalar = a.norm_sqr();
+						let d_ab: algebra::Scalar = a * b;
+						let d_bb: algebra::Scalar= b.norm_sqr();
+						let d_ca: algebra::Scalar = c * a;
+						let d_cb: algebra::Scalar = c * b;
+						let denom: algebra::Scalar = d_aa * d_bb - d_ab * d_ab;
+
+						let v: algebra::Scalar = (d_bb * d_ca - d_ab * d_cb) / denom;
+						let w: algebra::Scalar = (d_aa * d_cb - d_ab * d_ca) / denom;
+						let u: algebra::Scalar = 1.0 - v - w;
+
+						if u < 0.0 || v < 0.0 || w < 0.0 {
+							std::option::Option::None
+						} else {
+							std::option::Option::Some(point)
+						}
+					}
+				}
+			}
+
 		}
 	}
 
@@ -63,6 +103,10 @@ impl Primitive {
 
 			Primitive::Plane { position, normal } => {
 				(point - *normal).normalize()
+			}
+
+			Primitive::Triangle { v1, v2, v3 } => {
+				((*v2 - *v1) % (*v3 - *v1)).normalize()
 			}
 		}
 	}

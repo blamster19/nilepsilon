@@ -29,6 +29,7 @@ fn renderer_three_spheres_raster() {
 	let mut dis = renderer::Renderer {
 		scene: sc,
 		output: img,
+		aa_samples: 10,
 	};
 	dis.render();
 	dis.output.out(output::Format::PPM);
@@ -58,6 +59,7 @@ fn renderer_overlapping_spheres_raster() {
 	let mut dis = renderer::Renderer {
 		scene: sc,
 		output: img,
+		aa_samples: 10,
 	};
 	dis.render();
 	dis.output.out(output::Format::PPM);
@@ -86,7 +88,39 @@ fn renderer_sphere_plane_raster() {
 	let mut dis = renderer::Renderer {
 		scene: sc,
 		output: img,
+		aa_samples: 64,
 	};
 	dis.render();
 	dis.output.out(output::Format::PPM);
+}
+
+#[test]
+fn renderer_triangle_algorithm_speedtest() {
+	let cam = camera::Camera::new(
+		camera::Lens::Perspective,
+		0.035,
+		0.064,
+		0.048,
+		640,
+		480,
+		0.0,
+		1000.0,
+		);
+	let tri = primitives::Primitive::new_triangle(algebra::Vector::new(-1.0, 1.0, -1.0), algebra::Vector::new(-2.0, 1.0, 1.0), algebra::Vector::new(1.0, 1.0,0.0));
+
+	let sc = scene::Scene {
+		objects:vec![tri],
+		camera: cam,
+		background: scene::BackgroundType::SolidColor((0.5, 0.5, 0.5)),
+		};
+	let img = output::ImageFile::new(640, 480);
+	let mut dis = renderer::Renderer {
+		scene: sc,
+		output: img,
+		aa_samples: 1,
+	};
+	for _i in 0..200 {
+		dis.render();
+	}
+//	dis.output.out(output::Format::PPM);
 }

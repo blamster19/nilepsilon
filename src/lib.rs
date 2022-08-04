@@ -4,4 +4,5 @@ pub mod ray;
 pub mod camera;
 pub mod primitives;
 pub mod scene;
+pub mod materials;
 pub mod renderer;

@@ -1,8 +1,52 @@
 use crate::algebra;
 use crate::ray;
+use crate::materials;
+
+pub struct Primitive {
+	pub shape: Shape,
+	pub material: materials::Material,
+}
+
+impl Primitive {
+	pub fn new_sphere(position: algebra::Vector, radius: algebra::Scalar, material: materials::Material) -> Primitive {
+		Primitive {
+			material,
+			shape: Shape::Sphere {
+				position,
+				radius,
+			},
+		}
+	}
+
+	pub fn new_plane(position: algebra::Vector, normal: algebra::Vector, material: materials::Material) -> Primitive {
+		Primitive {
+			material,
+			shape: Shape::Plane {
+				position,
+				normal,
+			},
+		}
+	}
+
+	pub fn new_triangle(v1: algebra::Vector, v2: algebra::Vector, v3: algebra::Vector, material: materials::Material) -> Primitive {
+		let v1v2: algebra::Vector = v2 - v1;
+		let v1v3: algebra::Vector = v3 - v1;
+
+		Primitive {
+			material,
+			shape: Shape::Triangle {
+				v1,
+				v2,
+				v3,
+				v1v2: v1v2,
+				v1v3: v1v3,
+			},
+		}
+	}
+}
 
 #[derive(Clone, Copy)]
-pub enum Primitive {
+pub enum Shape {
 	Sphere {
 		position: algebra::Vector,
 		radius: algebra::Scalar,
@@ -21,10 +65,10 @@ pub enum Primitive {
 	},
 }
 
-impl Primitive {
+impl Shape {
 	pub fn intersect(&self, ray: &ray::Ray, min_d: algebra::Scalar, max_d: algebra::Scalar) -> std::option::Option<algebra::Vector> {
 		match self {
-			Primitive::Sphere { position, radius } => {
+			Shape::Sphere { position, radius, .. } => {
 				let orig_to_center: algebra::Vector = ray.orig - *position;
 				let a = ray.dir * ray.dir;
 				let b = 2.0 * orig_to_center * ray.dir;
@@ -47,7 +91,7 @@ impl Primitive {
 				}
 			}
 
-			Primitive::Plane { position, normal } => {
+			Shape::Plane { position, normal, .. } => {
 				let divisor: algebra::Scalar = (*normal) * ray.dir;
 				if divisor == 0.0 {
 					std::option::Option::None
@@ -61,7 +105,7 @@ impl Primitive {
 				}
 			}
 
-			Primitive::Triangle { v1, v2, v3, v1v2, v1v3, } => {
+			Shape::Triangle { v1, v2, v3, v1v2, v1v3, .. } => {
 				let point: algebra::Vector = ray.dir % (*v1v3);
 				let mut det: algebra::Scalar = (*v1v2) * point;
 				if det.abs() < algebra::Scalar::EPSILON {
@@ -69,17 +113,17 @@ impl Primitive {
 				} else {
 					det = 1.0 / det;
 					let tv: algebra::Vector = ray.orig - *v1;
-					let u: algebra::Scalar = tv * point * det;
-					if u < 0.0 || u > 1.0 {
+					let v: algebra::Scalar = tv * point * det;
+					if v < 0.0 || v > 1.0 {
 						return std::option::Option::None;
 					}
 					let qv: algebra::Vector = tv % (*v1v2);
-					let v: algebra::Scalar = ray.dir * qv * det;
-					if v < 0.0 || u + v > 1.0 {
+					let w: algebra::Scalar = ray.dir * qv * det;
+					if w < 0.0 || v + w > 1.0 {
 						return std::option::Option::None;
 					}
-					let t: algebra::Scalar = (*v1v2) * qv * det;
-					std::option::Option::Some(*v1 % *v2)
+					let u: algebra::Scalar = (*v1v2) * qv * det;
+					std::option::Option::Some(u * (*v1) + v * (*v2) + w * (*v3))
 				}
 			}
 		}
@@ -87,44 +131,18 @@ impl Primitive {
 
 	pub fn normal(&self, point: algebra::Vector) -> algebra::Vector {
 		match self {
-			Primitive::Sphere { position, radius } => {
+			Shape::Sphere { position, radius, .. } => {
 				(point - *position).normalize()
 			}
 
-			Primitive::Plane { position, normal } => {
+			Shape::Plane { position, normal, .. } => {
 				(point - *normal).normalize()
 			}
 
-			Primitive::Triangle { v1, v2, v3, .. } => {
+			Shape::Triangle { v1, v2, v3, .. } => {
 				((*v2 - *v1) % (*v3 - *v1)).normalize()
 			}
 		}
 	}
 
-	pub fn new_sphere(position: algebra::Vector, radius: algebra::Scalar) -> Primitive {
-		Primitive::Sphere {
-			position,
-			radius,
-		}
-	}
-
-	pub fn new_plane(position: algebra::Vector, normal: algebra::Vector) -> Primitive {
-		Primitive::Plane {
-			position,
-			normal,
-		}
-	}
-
-	pub fn new_triangle(v1: algebra::Vector, v2: algebra::Vector, v3: algebra::Vector) -> Primitive {
-		let v1v2: algebra::Vector = v2 - v1;
-		let v1v3: algebra::Vector = v3 - v1;
-
-		Primitive::Triangle {
-			v1,
-			v2,
-			v3,
-			v1v2: v1v2,
-			v1v3: v1v3,
-		}
-	}
 }

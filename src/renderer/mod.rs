@@ -44,13 +44,13 @@ impl Renderer {
 			normal = algebra::Vector::new(0.0, 0.0, 0.0);
 			let primary_ray = ray::Ray::new(algebra::Vector::new(0.0, 0.0, 0.0), camera_plane_vector);
 			for obj in &self.scene.objects {
-				match obj.intersect(&primary_ray, camera.min_clip, camera.max_clip) {
+				match obj.shape.intersect(&primary_ray, camera.min_clip, camera.max_clip) {
 					std::option::Option::Some(point) => {
 						let normsq = (point - camera_plane_vector).norm_sqr();
 						if normsq < d {
 							d = normsq;
 							closest_obj = std::option::Option::Some(obj);
-							normal = obj.normal(point);
+							normal = obj.shape.normal(point);
 						}
 					}
 					std::option::Option::None => {

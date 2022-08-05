@@ -5,6 +5,7 @@ use crate::primitives;
 use crate::output;
 use crate::scene;
 use rand::prelude::*;
+use rayon::prelude::*;
 
 pub struct Renderer {
 	pub scene: scene::Scene,
@@ -13,20 +14,26 @@ pub struct Renderer {
 	pub chunk_size_exp: u32,
 }
 
+type RawPixel = (algebra::Scalar, algebra::Scalar, algebra::Scalar);
+
 impl Renderer {
 	pub fn render(&mut self) {
 		let chunk_size = 2_u32.pow(self.chunk_size_exp).try_into().unwrap();
-		//temporary array
-		let mut arr = vec![0;(self.output.width * self.output.height).try_into().unwrap()];
-		arr.chunks_mut(chunk_size).enumerate().for_each(|(chunk_index, chunk)| {
-			for (pix_index, _pix) in chunk.iter_mut().enumerate() {
+		let mut pix_grid = vec![(0.0, 0.0, 0.0); (self.output.width * self.output.height).try_into().unwrap()];
+		pix_grid.par_chunks_mut(chunk_size).enumerate().for_each(|(chunk_index, chunk)| {
+			for (pix_index, pix) in chunk.iter_mut().enumerate() {
 				let offset = (chunk_index * chunk_size) as u32;
 				let j = offset / self.output.width;
 				let i = offset - j * self.output.height + pix_index as u32;
-				self.output.set_pixel(i, j, self.trace(i, j));
+				*pix = self.trace(i, j);
 			}
 		});
+		for i in 0..self.output.width {
+			for j in 0..self.output.height {
+				self.output.set_pixel(i, j, pix_grid[(j * self.output.width + i) as usize]);
+			}
 		}
+	}
 
 	fn trace(&self, x: u32, y: u32) -> (f64, f64, f64) {
 		let camera: &camera::Camera = &self.scene.camera;

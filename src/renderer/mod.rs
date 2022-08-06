@@ -43,54 +43,37 @@ impl Renderer {
 
     fn trace(&self, x: u32, y: u32) -> (f64, f64, f64) {
         let camera: &camera::Camera = &self.scene.camera;
-        let biggest_distance: algebra::Scalar = algebra::Scalar::MAX;
         let mut rng = thread_rng();
         let mut output_color: (f64, f64, f64) = (0.0, 0.0, 0.0);
 
         let mut closest_obj: std::option::Option<&primitives::Primitive>;
         let mut camera_plane_vector: algebra::Vector;
-        let mut d: algebra::Scalar;
+        let mut intersection: algebra::Vector;
         let mut normal: algebra::Vector;
         let mut rand_x: algebra::Scalar;
         let mut rand_y: algebra::Scalar;
 
         for i in 0..self.aa_samples {
-            closest_obj = std::option::Option::None;
-
+            // generate camera ray
             rand_x = rng.gen_range(-1.0..1.0);
             rand_y = rng.gen_range(-1.0..1.0);
             camera_plane_vector = (camera.ul_corner
                 + ((x as f64) + rand_x) * camera.horizontal_step
                 - ((y as f64) + rand_y) * camera.vertical_step)
                 .normalize();
-            d = biggest_distance;
-            normal = algebra::Vector::new(0.0, 0.0, 0.0);
             let primary_ray =
                 ray::Ray::new(algebra::Vector::new(0.0, 0.0, 0.0), camera_plane_vector);
-            for obj in &self.scene.objects {
-                match obj
-                    .shape
-                    .intersect(&primary_ray, camera.min_clip, camera.max_clip)
-                {
-                    std::option::Option::Some(point) => {
-                        let normsq = (point - camera_plane_vector).norm_sqr();
-                        if normsq < d {
-                            d = normsq;
-                            closest_obj = std::option::Option::Some(obj);
-                            normal = obj.shape.normal(point);
-                        }
-                    }
-                    std::option::Option::None => {
-                        continue;
-                    }
-                }
-            }
+
+            // find closest intersection
+            (closest_obj, intersection, normal) =
+                self.find_intersection(&primary_ray, camera.min_clip, camera.max_clip);
 
             match closest_obj {
                 std::option::Option::None => {
-                    output_color.0 += 0.0;
-                    output_color.1 += 0.0;
-                    output_color.2 += 0.0;
+                    let background = self.scene.background.return_color(camera_plane_vector);
+					output_color.0 += background.0;
+                    output_color.1 += background.1;
+                    output_color.2 += background.2;
                 }
                 std::option::Option::Some(object) => {
                     //objects normal
@@ -106,14 +89,47 @@ impl Renderer {
         output_color
     }
 
-	// the algorithm assumes wavelengths out of range are invisible, therefore black
-	fn wavelength_to_xyz (lambda: algebra::Scalar) -> RawPixel {
-		let index = lambda * 10e6 - 360.0;
-		if index < 0.0 || index > 470.0 {
-			(0.0, 0.0, 0.0)
-		} else {
-			constants::CIE_XYZ_1931_COLOR_MATCH_2_DEG [index as usize]
-		}
-	}
+    fn find_intersection(
+        &self,
+        ray: &ray::Ray,
+        min: algebra::Scalar,
+        max: algebra::Scalar,
+    ) -> (
+        std::option::Option<&primitives::Primitive>,
+        algebra::Vector,
+        algebra::Vector,
+    ) {
+        let mut d: algebra::Scalar = max;
+        let mut closest_obj: std::option::Option<&primitives::Primitive> =
+            std::option::Option::None;
+        let mut intersection: algebra::Vector = algebra::Vector::new(0.0, 0.0, 0.0);
+        let mut normal: algebra::Vector = algebra::Vector::new(0.0, 0.0, 0.0);
+        for obj in &self.scene.objects {
+            match obj.shape.intersect(&ray, min, max) {
+                std::option::Option::Some(point) => {
+                    let normsq = (point - ray.dir).norm_sqr();
+                    if normsq < d {
+                        d = normsq;
+                        closest_obj = std::option::Option::Some(obj);
+                        intersection = point;
+                        normal = obj.shape.normal(point);
+                    }
+                }
+                std::option::Option::None => {
+                    continue;
+                }
+            }
+        }
+        (closest_obj, intersection, normal)
+    }
 
+    // the algorithm assumes wavelengths out of range are invisible, therefore black
+    fn wavelength_to_xyz(lambda: algebra::Scalar) -> RawPixel {
+        let index = lambda * 10e6 - 360.0;
+        if index < 0.0 || index > 470.0 {
+            (0.0, 0.0, 0.0)
+        } else {
+            constants::CIE_XYZ_1931_COLOR_MATCH_2_DEG[index as usize]
+        }
+    }
 }

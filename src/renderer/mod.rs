@@ -1,5 +1,6 @@
 use crate::algebra;
 use crate::camera;
+use crate::constants;
 use crate::output;
 use crate::primitives;
 use crate::ray;
@@ -104,4 +105,15 @@ impl Renderer {
         output_color.2 = output_color.2 / (self.aa_samples as f64);
         output_color
     }
+
+	// the algorithm assumes wavelengths out of range are invisible, therefore black
+	fn wavelength_to_xyz (lambda: algebra::Scalar) -> RawPixel {
+		let index = lambda * 10e6 - 360.0;
+		if index < 0.0 || index > 470.0 {
+			(0.0, 0.0, 0.0)
+		} else {
+			constants::CIE_XYZ_1931_COLOR_MATCH_2_DEG [index as usize]
+		}
+	}
+
 }

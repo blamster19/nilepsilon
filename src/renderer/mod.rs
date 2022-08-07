@@ -13,12 +13,16 @@ pub struct Renderer {
     pub output: output::ImageFile,
     pub aa_samples: u32,
     pub chunk_size_exp: u32,
+    pub lights: Vec<usize>,
 }
 
 type RawPixel = (algebra::Scalar, algebra::Scalar, algebra::Scalar);
 
 impl Renderer {
     pub fn render(&mut self) {
+        // list all lights in the scene
+        self.list_lights();
+
         let chunk_size = 2_u32.pow(self.chunk_size_exp).try_into().unwrap();
         let mut pix_grid =
             vec![(0.0, 0.0, 0.0); (self.output.width * self.output.height).try_into().unwrap()];
@@ -37,6 +41,19 @@ impl Renderer {
             for j in 0..self.output.height {
                 self.output
                     .set_pixel(i, j, pix_grid[(j * self.output.width + i) as usize]);
+            }
+        }
+    }
+
+    fn list_lights(&mut self) {
+        for (index, obj) in self.scene.objects.iter().enumerate() {
+            match obj.material.emitter {
+                true => {
+                    self.lights.push(index);
+                }
+                false => {
+                    continue;
+                }
             }
         }
     }
@@ -71,7 +88,7 @@ impl Renderer {
             match closest_obj {
                 std::option::Option::None => {
                     let background = self.scene.background.return_color(camera_plane_vector);
-					output_color.0 += background.0;
+                    output_color.0 += background.0;
                     output_color.1 += background.1;
                     output_color.2 += background.2;
                 }

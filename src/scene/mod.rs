@@ -6,11 +6,16 @@ pub enum BackgroundType {
 	SolidColor((f64, f64, f64)),
 }
 
-impl BackgroundType {
+pub struct Background {
+	color: BackgroundType,
+	radiance: algebra::Scalar,
+}
+
+impl Background {
 	pub fn return_color(&self, dir: algebra::Vector) -> (f64, f64, f64) {
-		match self {
+		match self.color {
 			BackgroundType::SolidColor(color) => {
-				*color
+				color
 			}
 		}
 	}
@@ -19,5 +24,5 @@ impl BackgroundType {
 pub struct Scene {
 	pub objects: Vec<primitives::Primitive>,
 	pub camera: camera::Camera,
-	pub background: BackgroundType,
+	pub background: Background,
 }

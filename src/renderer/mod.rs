@@ -4,6 +4,7 @@ use crate::constants;
 use crate::output;
 use crate::primitives;
 use crate::ray;
+use crate::sampler;
 use crate::scene;
 use rand::prelude::*;
 use rayon::prelude::*;
@@ -11,7 +12,7 @@ use rayon::prelude::*;
 pub struct Renderer {
 	pub scene: scene::Scene,
 	pub output: output::ImageFile,
-	pub aa_samples: u32,
+	pub aa_samples: usize,
 	pub chunk_size_exp: u32,
 	pub lights: Vec<usize>,
 	pub max_depth: u32,
@@ -64,7 +65,7 @@ impl Renderer {
 
 	fn trace(&self, x: u32, y: u32) -> (f64, f64, f64) {
 		let camera: &camera::Camera = &self.scene.camera;
-		let mut rng = thread_rng();
+		let mut sampler = sampler::Sampler { rng: thread_rng() };
 		let mut output_color: (f64, f64, f64) = (0.0, 0.0, 0.0);
 
 		let mut camera_plane_vector: algebra::Vector;
@@ -73,11 +74,13 @@ impl Renderer {
 		let mut wavelength: algebra::Scalar;
 		let mut radiance: algebra::Scalar = 0.0;
 		let mut temp_color: RawPixel;
+		let camera_samples = sampler.random_list_2d(self.aa_samples, -1.0, 1.0);
+		let wavelength_samples = sampler.random_list_1d(self.aa_samples, 360.0e-9, 830.0e-9);
 
 		for i in 0..self.aa_samples {
 			// generate camera ray
-			rand_x = rng.gen_range(-1.0..1.0);
-			rand_y = rng.gen_range(-1.0..1.0);
+			rand_x = camera_samples[i].0;
+			rand_y = camera_samples[i].1;
 			camera_plane_vector = (camera.ul_corner
 				+ ((x as f64) + rand_x) * camera.horizontal_step
 				- ((y as f64) + rand_y) * camera.vertical_step)
@@ -86,7 +89,7 @@ impl Renderer {
 				ray::Ray::new(algebra::Vector::new(0.0, 0.0, 0.0), camera_plane_vector);
 
 			// integrate
-			wavelength = rng.gen_range(360.0..830.0) * 1.0e-9;
+			wavelength = wavelength_samples[i];
 			radiance = self.integrate(primary_ray, self.max_depth, wavelength);
 			temp_color = self.wavelength_to_xyz(wavelength);
 			output_color.0 += temp_color.0 * radiance;

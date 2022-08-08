@@ -1,5 +1,8 @@
 use crate::algebra;
 
+pub const HC_BY_K: algebra::Scalar = 0.01439;
+pub const TWO_HC2: algebra::Scalar = 1.191e-16;
+
 // source:
 // https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer
 pub const CIE_XYZ_1931_COLOR_MATCH_2_DEG: [(algebra::Scalar, algebra::Scalar, algebra::Scalar);

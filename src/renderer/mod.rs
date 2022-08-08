@@ -14,6 +14,7 @@ pub struct Renderer {
     pub aa_samples: u32,
     pub chunk_size_exp: u32,
     pub lights: Vec<usize>,
+    pub max_depth: u32,
 }
 
 type RawPixel = (algebra::Scalar, algebra::Scalar, algebra::Scalar);
@@ -40,7 +41,7 @@ impl Renderer {
         for i in 0..self.output.width {
             for j in 0..self.output.height {
                 self.output
-                    .set_pixel(i, j, pix_grid[(j * self.output.width + i) as usize]);
+                    .set_pixel(i, j, self.xyz_to_cie_rgb_d65(pix_grid[(j * self.output.width + i) as usize]));
             }
         }
     }
@@ -63,12 +64,12 @@ impl Renderer {
         let mut rng = thread_rng();
         let mut output_color: (f64, f64, f64) = (0.0, 0.0, 0.0);
 
-        let mut closest_obj: std::option::Option<&primitives::Primitive>;
         let mut camera_plane_vector: algebra::Vector;
-        let mut intersection: algebra::Vector;
-        let mut normal: algebra::Vector;
         let mut rand_x: algebra::Scalar;
         let mut rand_y: algebra::Scalar;
+        let mut wavelength: algebra::Scalar;
+        let mut radiance: algebra::Scalar = 0.0;
+        let mut temp_color: RawPixel;
 
         for i in 0..self.aa_samples {
             // generate camera ray
@@ -81,29 +82,31 @@ impl Renderer {
             let primary_ray =
                 ray::Ray::new(algebra::Vector::new(0.0, 0.0, 0.0), camera_plane_vector);
 
-            // find closest intersection
-            (closest_obj, intersection, normal) =
-                self.find_intersection(&primary_ray, camera.min_clip, camera.max_clip);
-
-            match closest_obj {
-                std::option::Option::None => {
-                    let background = self.scene.background.return_color(camera_plane_vector);
-                    output_color.0 += background.0;
-                    output_color.1 += background.1;
-                    output_color.2 += background.2;
-                }
-                std::option::Option::Some(object) => {
-                    //objects normal
-                    output_color.0 += normal.x;
-                    output_color.1 += normal.y;
-                    output_color.2 += normal.z;
-                }
-            }
+            // integrate
+            wavelength = rng.gen_range(360.0..830.0) * 1.0e-9;
+            (wavelength, radiance) = self.integrate(primary_ray, self.max_depth, wavelength);
+            temp_color = self.wavelength_to_xyz(wavelength);
+            output_color.0 += temp_color.0 * radiance;
+            output_color.1 += temp_color.1 * radiance;
+            output_color.2 += temp_color.2 * radiance;
         }
-        output_color.0 = output_color.0 / (self.aa_samples as f64);
-        output_color.1 = output_color.1 / (self.aa_samples as f64);
-        output_color.2 = output_color.2 / (self.aa_samples as f64);
+        output_color.0 /= self.aa_samples as f64;
+        output_color.1 /= self.aa_samples as f64;
+        output_color.2 /= self.aa_samples as f64;
         output_color
+    }
+
+    fn integrate(
+        &self,
+        ray: ray::Ray,
+        depth: u32,
+        wavelength: algebra::Scalar,
+    ) -> (algebra::Scalar, algebra::Scalar) {
+        return (
+            wavelength,
+            self.scene.background.return_radiance(ray.dir, wavelength),
+        );
+        }
     }
 
     fn find_intersection(
@@ -141,12 +144,21 @@ impl Renderer {
     }
 
     // the algorithm assumes wavelengths out of range are invisible, therefore black
-    fn wavelength_to_xyz(lambda: algebra::Scalar) -> RawPixel {
-        let index = lambda * 10e6 - 360.0;
+    fn wavelength_to_xyz(&self, lambda: algebra::Scalar) -> RawPixel {
+        let index = lambda * 1e9 - 360.0;
         if index < 0.0 || index > 470.0 {
             (0.0, 0.0, 0.0)
         } else {
             constants::CIE_XYZ_1931_COLOR_MATCH_2_DEG[index as usize]
         }
+    }
+	// source:
+	// https://www.cs.rit.edu/~ncs/color/t_convert.html#RGB%20to%20XYZ%20&%20XYZ%20to%20RGB
+    fn xyz_to_cie_rgb_d65(&self, xyz: RawPixel) -> RawPixel {
+        (
+            3.240479 * xyz.0 - 1.537150 * xyz.1 - 0.498535 * xyz.2,
+            -0.969256 * xyz.0 + 1.875992 * xyz.1 + 0.041556 * xyz.2,
+            0.055648 * xyz.0 - 0.204043 * xyz.1 + 1.057311 * xyz.2,
+        )
     }
 }

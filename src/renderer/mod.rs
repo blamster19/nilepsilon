@@ -87,7 +87,7 @@ impl Renderer {
 
 			// integrate
 			wavelength = rng.gen_range(360.0..830.0) * 1.0e-9;
-			(wavelength, radiance) = self.integrate(primary_ray, self.max_depth, wavelength);
+			radiance = self.integrate(primary_ray, self.max_depth, wavelength);
 			temp_color = self.wavelength_to_xyz(wavelength);
 			output_color.0 += temp_color.0 * radiance;
 			output_color.1 += temp_color.1 * radiance;
@@ -104,10 +104,10 @@ impl Renderer {
 		ray: ray::Ray,
 		depth: u32,
 		wavelength: algebra::Scalar,
-	) -> (algebra::Scalar, algebra::Scalar) {
+	) -> algebra::Scalar {
 		// if reached the max depth and still bouncing, terminate
 		if depth == 0 {
-			return (wavelength, 0.0);
+			return  0.0;
 		}
 		// find closest intersection
 		let mut closest_obj: std::option::Option<&primitives::Primitive>;
@@ -117,11 +117,8 @@ impl Renderer {
 			self.find_intersection(&ray, self.scene.camera.min_clip, self.scene.camera.max_clip);
 
 		match closest_obj {
-			std::option::Option::None => (
-				wavelength,
-				self.scene.background.return_radiance(ray.dir, wavelength),
-			),
-			std::option::Option::Some(object) => (wavelength, 0.0),
+			std::option::Option::None => self.scene.background.return_radiance(ray.dir, wavelength),
+			std::option::Option::Some(object) => 0.0,
 		}
 	}
 

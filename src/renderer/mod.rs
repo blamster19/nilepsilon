@@ -90,7 +90,7 @@ impl Renderer {
 
 			// integrate
 			wavelength = wavelength_samples[i];
-			radiance = self.integrate(primary_ray, self.max_depth, wavelength);
+			radiance = self.integrate(primary_ray, self.max_depth, wavelength, &mut sampler);
 			temp_color = self.wavelength_to_xyz(wavelength);
 			output_color.0 += temp_color.0 * radiance;
 			output_color.1 += temp_color.1 * radiance;
@@ -107,22 +107,35 @@ impl Renderer {
 		ray: ray::Ray,
 		depth: u32,
 		wavelength: algebra::Scalar,
+		sampler: &mut sampler::Sampler,
 	) -> algebra::Scalar {
 		// if reached the max depth and still bouncing, terminate
 		if depth == 0 {
 			return  0.0;
 		}
 		// find closest intersection
-		let mut closest_obj: std::option::Option<&primitives::Primitive>;
-		let mut intersection: algebra::Vector;
-		let mut normal: algebra::Vector;
+		let closest_obj: std::option::Option<&primitives::Primitive>;
+		let intersection: algebra::Vector;
+		let normal: algebra::Vector;
 		(closest_obj, intersection, normal) =
 			self.find_intersection(&ray, self.scene.camera.min_clip, self.scene.camera.max_clip);
 
 		match closest_obj {
 			std::option::Option::None => self.scene.background.return_radiance(ray.dir, wavelength),
-			std::option::Option::Some(object) => 0.0,
+			std::option::Option::Some(object) => {
+				// pick random direction
+				let rand_rays: Vec<(f64, f64, f64)> = sampler.random_list_3d_sphere(1);
+				let next_ray: ray::Ray = self.random_ray_outside(intersection, normal, rand_rays[0]);
+				let mut radiance: algebra::Scalar = self.integrate(next_ray, depth - 1, wavelength, sampler);
+				radiance *= 0.5;
+				radiance
+			},
 		}
+	}
+
+	fn random_ray_outside(&self, point: algebra::Vector, normal: algebra::Vector, rand: (f64, f64, f64)) -> ray::Ray {
+		let new_dir = algebra::Vector::new(rand.0, rand.1, rand.2) + normal;
+		ray::Ray::new(point, new_dir)
 	}
 
 	fn find_intersection(
@@ -143,12 +156,14 @@ impl Renderer {
 		for obj in &self.scene.objects {
 			match obj.shape.intersect(&ray, min, max) {
 				std::option::Option::Some(point) => {
-					let normsq = (point - ray.dir).norm_sqr();
-					if normsq < d {
-						d = normsq;
+					let norm = (point - ray.orig).norm();
+					if norm < d {
+						d = norm;
 						closest_obj = std::option::Option::Some(obj);
 						intersection = point;
 						normal = obj.shape.normal(point);
+					} else {
+						continue;
 					}
 				}
 				std::option::Option::None => {

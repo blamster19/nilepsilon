@@ -23,7 +23,7 @@ impl Primitive {
 			material,
 			shape: Shape::Plane {
 				position,
-				normal,
+				normal: normal.normalize(),
 			},
 		}
 	}
@@ -136,7 +136,7 @@ impl Shape {
 			}
 
 			Shape::Plane { position, normal, .. } => {
-				(point - *normal).normalize()
+				*normal
 			}
 
 			Shape::Triangle { v1, v2, v3, .. } => {
@@ -144,5 +144,4 @@ impl Shape {
 			}
 		}
 	}
-
 }

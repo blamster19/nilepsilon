@@ -75,7 +75,7 @@ impl Renderer {
 		let mut radiance: algebra::Scalar = 0.0;
 		let mut temp_color: RawPixel;
 		let camera_samples = sampler.random_list_2d(self.aa_samples, -1.0, 1.0);
-		let wavelength_samples = sampler.random_list_1d(self.aa_samples, 360.0e-9, 830.0e-9);
+		let wavelength_samples = sampler.random_list_1d(self.aa_samples, 360.0e-9, 650.0e-9);
 
 		for i in 0..self.aa_samples {
 			// generate camera ray

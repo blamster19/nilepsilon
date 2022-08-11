@@ -1,6 +1,7 @@
 use crate::algebra;
 use crate::camera;
 use crate::constants;
+use crate::materials;
 use crate::output;
 use crate::primitives;
 use crate::ray;
@@ -53,11 +54,11 @@ impl Renderer {
 	fn list_lights(&mut self) {
 		for (index, obj) in self.scene.objects.iter().enumerate() {
 			match obj.material.emitter {
-				true => {
-					self.lights.push(index);
-				}
-				false => {
+				materials::EmissionType::NonEmissive => {
 					continue;
+				}
+				_ => {
+					self.lights.push(index);
 				}
 			}
 		}
@@ -127,14 +128,14 @@ impl Renderer {
 				let rand_rays: Vec<(f64, f64, f64)> = sampler.random_list_3d_sphere(1);
 				let next_ray: ray::Ray = self.random_ray_outside(intersection, normal, rand_rays[0]);
 				let mut radiance: algebra::Scalar = self.integrate(next_ray, depth - 1, wavelength, sampler);
-				radiance *= 0.5;
+				radiance = object.material.return_radiance(radiance, wavelength);
 				radiance
 			},
 		}
 	}
 
 	fn random_ray_outside(&self, point: algebra::Vector, normal: algebra::Vector, rand: (f64, f64, f64)) -> ray::Ray {
-		let new_dir = (algebra::Vector::new(rand.0, rand.1, rand.2) + normal);
+		let new_dir = algebra::Vector::new(rand.0, rand.1, rand.2) + normal;
 		ray::Ray::new(point, new_dir)
 	}
 

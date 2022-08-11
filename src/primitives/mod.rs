@@ -74,7 +74,7 @@ impl Shape {
 				let b = 2.0 * orig_to_center * ray.dir;
 				let c = orig_to_center.norm_sqr() - radius * radius;
 				let delta = b * b - 4.0 * a * c;
-				if delta < 0.0 {
+				if delta < algebra::Scalar::EPSILON {
 					std::option::Option::None
 				} else {
 					let mut t: algebra::Scalar = (-b - delta.sqrt()) / 2.0 / a;
@@ -93,7 +93,7 @@ impl Shape {
 
 			Shape::Plane { position, normal, .. } => {
 				let divisor: algebra::Scalar = (*normal) * ray.dir;
-				if divisor == 0.0 {
+				if divisor.abs() < algebra::Scalar::EPSILON {
 					std::option::Option::None
 				} else {
 					let t: algebra::Scalar = ((*position - ray.orig) * (*normal)) / divisor;
@@ -106,24 +106,24 @@ impl Shape {
 			}
 
 			Shape::Triangle { v1, v2, v3, v1v2, v1v3, .. } => {
-				let point: algebra::Vector = ray.dir % (*v1v3);
-				let mut det: algebra::Scalar = (*v1v2) * point;
+				let plane: algebra::Vector = ray.dir % (*v1v3);
+				let mut det: algebra::Scalar = (*v1v2) * plane;
 				if det.abs() < algebra::Scalar::EPSILON {
 					std::option::Option::None
 				} else {
 					det = 1.0 / det;
-					let tv: algebra::Vector = ray.orig - *v1;
-					let v: algebra::Scalar = tv * point * det;
-					if v < 0.0 || v > 1.0 {
+					let t_vec: algebra::Vector = ray.orig - *v1;
+					let u: algebra::Scalar = (t_vec * plane) * det;
+					if u < 0.0 || u > 1.0 {
 						return std::option::Option::None;
 					}
-					let qv: algebra::Vector = tv % (*v1v2);
-					let w: algebra::Scalar = ray.dir * qv * det;
-					if w < 0.0 || v + w > 1.0 {
+					let q_vec: algebra::Vector = t_vec % (*v1v2);
+					let v: algebra::Scalar = (ray.dir * q_vec) * det;
+					if v < 0.0 || u + v > 1.0 {
 						return std::option::Option::None;
 					}
-					let u: algebra::Scalar = (*v1v2) * qv * det;
-					std::option::Option::Some(u * (*v1) + v * (*v2) + w * (*v3))
+					let point_d: algebra::Scalar = (*v1v3 * q_vec) * det;
+					std::option::Option::Some(ray.point_on_line(point_d))
 				}
 			}
 		}

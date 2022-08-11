@@ -118,7 +118,7 @@ impl Renderer {
 		let intersection: algebra::Vector;
 		let normal: algebra::Vector;
 		(closest_obj, intersection, normal) =
-			self.find_intersection(&ray, self.scene.camera.min_clip, self.scene.camera.max_clip);
+			self.find_intersection(&ray, 0.0, algebra::Scalar::MAX);
 
 		match closest_obj {
 			std::option::Option::None => self.scene.background.return_radiance(ray.dir, wavelength),
@@ -134,7 +134,7 @@ impl Renderer {
 	}
 
 	fn random_ray_outside(&self, point: algebra::Vector, normal: algebra::Vector, rand: (f64, f64, f64)) -> ray::Ray {
-		let new_dir = algebra::Vector::new(rand.0, rand.1, rand.2) + normal;
+		let new_dir = (algebra::Vector::new(rand.0, rand.1, rand.2) + normal);
 		ray::Ray::new(point, new_dir)
 	}
 
@@ -157,7 +157,7 @@ impl Renderer {
 			match obj.shape.intersect(&ray, min, max) {
 				std::option::Option::Some(point) => {
 					let norm = (point - ray.orig).norm();
-					if norm < d {
+					if norm < d && norm > algebra::Scalar::EPSILON {
 						d = norm;
 						closest_obj = std::option::Option::Some(obj);
 						intersection = point;

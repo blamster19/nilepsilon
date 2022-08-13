@@ -92,6 +92,8 @@ impl Renderer {
 			// integrate
 			wavelength = wavelength_samples[i];
 			radiance = self.integrate(primary_ray, self.max_depth, wavelength, &mut sampler);
+
+			// compute color
 			temp_color = self.wavelength_to_xyz(wavelength);
 			output_color.0 += temp_color.0 * radiance;
 			output_color.1 += temp_color.1 * radiance;
@@ -128,7 +130,8 @@ impl Renderer {
 				let rand_rays: Vec<(f64, f64, f64)> = sampler.random_list_3d_sphere(1);
 				let next_ray: ray::Ray = self.random_ray_outside(intersection, normal, rand_rays[0]);
 				let mut radiance: algebra::Scalar = self.integrate(next_ray, depth - 1, wavelength, sampler);
-				radiance = object.material.return_radiance(radiance, wavelength);
+				radiance *= object.material.return_scatter_radiance(ray.dir, next_ray.dir, wavelength);
+				radiance += object.material.return_emission_radiance(wavelength);
 				radiance
 			},
 		}

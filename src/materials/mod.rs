@@ -10,17 +10,22 @@ pub enum EmissionType {
 }
 
 #[derive(Clone)]
+pub enum SurfaceType {
+	Dielectric{ }
+}
+
+#[derive(Clone)]
 pub struct Material {
 	pub emitter: EmissionType,
+	pub surface: SurfaceType,
 }
 
 impl Material {
-	pub fn return_radiance(&self, mut radiance: algebra::Scalar, lambda: algebra::Scalar) -> algebra::Scalar {
-		radiance += self.emission(lambda);
-		radiance
+	pub fn return_scatter_radiance(&self, incoming: algebra::Vector, outgoing: algebra::Vector, lambda: algebra::Scalar) -> algebra::Scalar {
+		1.0
 	}
 
-	fn emission(&self, lambda: algebra::Scalar) -> algebra::Scalar {
+	pub fn return_emission_radiance(&self, lambda: algebra::Scalar) -> algebra::Scalar {
 		match self.emitter {
 			EmissionType::NonEmissive => 0.0,
 			EmissionType::Incandescent{ temperature } => {

@@ -7,4 +7,5 @@ pub mod primitives;
 pub mod scene;
 pub mod materials;
 pub mod sampler;
+pub mod shaders;
 pub mod renderer;

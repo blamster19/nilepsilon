@@ -1,6 +1,7 @@
 use crate::algebra;
 use crate::constants;
 use crate::ray;
+use crate::shaders;
 
 #[derive(Clone)]
 pub enum EmissionType {
@@ -17,10 +18,19 @@ pub enum SurfaceType {
 #[derive(Clone)]
 pub struct Material {
 	pub emitter: EmissionType,
-	pub surface: SurfaceType,
+	bxdf: shaders::BxDF,
 }
 
 impl Material {
+	pub fn new(emitter: EmissionType, surface: SurfaceType) -> Self {
+		Self {
+			emitter,
+			bxdf: match surface {
+				Dielectric => shaders::BxDF::oren_nayar(0.5)
+			}
+		}
+	}
+
 	pub fn return_scatter_radiance(&self, incoming: algebra::Vector, outgoing: algebra::Vector, lambda: algebra::Scalar) -> algebra::Scalar {
 		1.0
 	}

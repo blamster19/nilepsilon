@@ -12,7 +12,7 @@ pub struct Camera {
 	focal_length: algebra::Scalar,
 
 	pub sensor_width: algebra::Scalar,
-	pub sensor_height: algebra::Scalar, 
+	pub sensor_height: algebra::Scalar,
 	pub canvas_pix_width: u32,
 	pub canvas_pix_height: u32,
 
@@ -33,40 +33,55 @@ impl Camera {
 		canvas_pix_height: u32,
 		min_clip: algebra::Scalar,
 		max_clip: algebra::Scalar,
-		) -> Camera {
-			if focal_length <= 0.0 {
-				panic!("Camera property `focal_length` must be greater than or equal to  0.0, got {}", focal_length);
-			}
-			if sensor_width < 0.0 {
-				panic!("Camera property `sensor_width` must be greater than 0.0, got {}", sensor_width);
-			}
-			if sensor_height < 0.0 {
-				panic!("Camera property `sensor_height` must be greater than 0.0, got {}", sensor_height);
-			}
-			if min_clip < 0.0 {
-				panic!("Camera property `min_clip` must be greater than or equal to 0.0, got {}", min_clip);
-			}
-			if max_clip <= 0.0 {
-				panic!("Camera property `max_clip` must be greater than 0.0, got {}", max_clip);
-			}
-			let hstep: algebra::Scalar = sensor_width/(canvas_pix_width) as algebra::Scalar;
-			let vstep: algebra::Scalar = sensor_height/(canvas_pix_height) as algebra::Scalar;
-			Camera {
-				lens_type,
-				focal_length,
-				sensor_width,
-				sensor_height,
-				canvas_pix_width,
-				canvas_pix_height,
-				min_clip,
-				max_clip,
-				ul_corner: algebra::Vector::new(
-					-(hstep * (canvas_pix_width) as algebra::Scalar)/2.0,
-					focal_length,
-					(vstep * (canvas_pix_height) as algebra::Scalar)/2.0,
-					),
-				horizontal_step: algebra::Vector::new(hstep, 0.0, 0.0),
-				vertical_step: algebra::Vector::new(0.0, 0.0, vstep),
-			}
+	) -> Camera {
+		if focal_length <= 0.0 {
+			panic!(
+				"Camera property `focal_length` must be greater than or equal to  0.0, got {}",
+				focal_length
+			);
 		}
+		if sensor_width < 0.0 {
+			panic!(
+				"Camera property `sensor_width` must be greater than 0.0, got {}",
+				sensor_width
+			);
+		}
+		if sensor_height < 0.0 {
+			panic!(
+				"Camera property `sensor_height` must be greater than 0.0, got {}",
+				sensor_height
+			);
+		}
+		if min_clip < 0.0 {
+			panic!(
+				"Camera property `min_clip` must be greater than or equal to 0.0, got {}",
+				min_clip
+			);
+		}
+		if max_clip <= 0.0 {
+			panic!(
+				"Camera property `max_clip` must be greater than 0.0, got {}",
+				max_clip
+			);
+		}
+		let hstep: algebra::Scalar = sensor_width / (canvas_pix_width) as algebra::Scalar;
+		let vstep: algebra::Scalar = sensor_height / (canvas_pix_height) as algebra::Scalar;
+		Camera {
+			lens_type,
+			focal_length,
+			sensor_width,
+			sensor_height,
+			canvas_pix_width,
+			canvas_pix_height,
+			min_clip,
+			max_clip,
+			ul_corner: algebra::Vector::new(
+				-(hstep * (canvas_pix_width) as algebra::Scalar) / 2.0,
+				focal_length,
+				(vstep * (canvas_pix_height) as algebra::Scalar) / 2.0,
+			),
+			horizontal_step: algebra::Vector::new(hstep, 0.0, 0.0),
+			vertical_step: algebra::Vector::new(0.0, 0.0, vstep),
+		}
+	}
 }

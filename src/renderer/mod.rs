@@ -122,25 +122,40 @@ impl Renderer {
 		match closest_obj {
 			std::option::Option::None => self.scene.background.return_radiance(ray.dir, wavelength),
 			std::option::Option::Some(object) => {
-				let mut radiance: algebra::Scalar = object.material.return_emission_radiance(wavelength);
+				let mut radiance: algebra::Scalar =
+					object.material.return_emission_radiance(wavelength);
 				if depth > 0 {
 					// pick random direction
 					let rand_rays: Vec<(f64, f64, f64)> = sampler.random_list_3d_sphere(1);
-					let mut next_ray: ray::Ray = self.random_ray_outside(intersection, normal, rand_rays[0]);
-					let mut contrib: algebra::Scalar = self.integrate(next_ray, depth - 1, wavelength, sampler);
-					contrib *= object.material.return_scatter_radiance(ray.dir, next_ray.dir, wavelength);
+					let mut next_ray: ray::Ray =
+						self.random_ray_outside(intersection, normal, rand_rays[0]);
+					let mut contrib: algebra::Scalar =
+						self.integrate(next_ray, depth - 1, wavelength, sampler);
+					contrib *=
+						object
+							.material
+							.return_scatter_radiance(ray.dir, next_ray.dir, wavelength);
 					radiance += contrib;
 					// explicitly sample lights
 					for light in &self.lights {
-						next_ray = ray::Ray::new(intersection, (self.scene.objects[*light].shape.point_inside() - intersection).normalize());
+						next_ray = ray::Ray::new(
+							intersection,
+							(self.scene.objects[*light].shape.point_inside() - intersection)
+								.normalize(),
+						);
 					}
 				}
 				radiance
-			},
+			}
 		}
 	}
 
-	fn random_ray_outside(&self, point: algebra::Vector, normal: algebra::Vector, rand: (f64, f64, f64)) -> ray::Ray {
+	fn random_ray_outside(
+		&self,
+		point: algebra::Vector,
+		normal: algebra::Vector,
+		rand: (f64, f64, f64),
+	) -> ray::Ray {
 		let new_dir = algebra::Vector::new(rand.0, rand.1, rand.2) + normal;
 		ray::Ray::new(point, new_dir)
 	}

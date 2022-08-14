@@ -1,6 +1,6 @@
 use crate::algebra;
-use crate::ray;
 use crate::materials;
+use crate::ray;
 
 pub struct Primitive {
 	pub shape: Shape,
@@ -8,17 +8,22 @@ pub struct Primitive {
 }
 
 impl Primitive {
-	pub fn new_sphere(position: algebra::Vector, radius: algebra::Scalar, material: materials::Material) -> Primitive {
+	pub fn new_sphere(
+		position: algebra::Vector,
+		radius: algebra::Scalar,
+		material: materials::Material,
+	) -> Primitive {
 		Primitive {
 			material,
-			shape: Shape::Sphere {
-				position,
-				radius,
-			},
+			shape: Shape::Sphere { position, radius },
 		}
 	}
 
-	pub fn new_plane(position: algebra::Vector, normal: algebra::Vector, material: materials::Material) -> Primitive {
+	pub fn new_plane(
+		position: algebra::Vector,
+		normal: algebra::Vector,
+		material: materials::Material,
+	) -> Primitive {
 		Primitive {
 			material,
 			shape: Shape::Plane {
@@ -28,7 +33,12 @@ impl Primitive {
 		}
 	}
 
-	pub fn new_triangle(v1: algebra::Vector, v2: algebra::Vector, v3: algebra::Vector, material: materials::Material) -> Primitive {
+	pub fn new_triangle(
+		v1: algebra::Vector,
+		v2: algebra::Vector,
+		v3: algebra::Vector,
+		material: materials::Material,
+	) -> Primitive {
 		let v1v2: algebra::Vector = v2 - v1;
 		let v1v3: algebra::Vector = v3 - v1;
 
@@ -66,9 +76,16 @@ pub enum Shape {
 }
 
 impl Shape {
-	pub fn intersect(&self, ray: &ray::Ray, min_d: algebra::Scalar, max_d: algebra::Scalar) -> std::option::Option<algebra::Vector> {
+	pub fn intersect(
+		&self,
+		ray: &ray::Ray,
+		min_d: algebra::Scalar,
+		max_d: algebra::Scalar,
+	) -> std::option::Option<algebra::Vector> {
 		match self {
-			Shape::Sphere { position, radius, .. } => {
+			Shape::Sphere {
+				position, radius, ..
+			} => {
 				let orig_to_center: algebra::Vector = ray.orig - *position;
 				let a = ray.dir * ray.dir;
 				let b = 2.0 * orig_to_center * ray.dir;
@@ -91,7 +108,9 @@ impl Shape {
 				}
 			}
 
-			Shape::Plane { position, normal, .. } => {
+			Shape::Plane {
+				position, normal, ..
+			} => {
 				let divisor: algebra::Scalar = (*normal) * ray.dir;
 				if divisor.abs() < algebra::Scalar::EPSILON {
 					std::option::Option::None
@@ -105,7 +124,14 @@ impl Shape {
 				}
 			}
 
-			Shape::Triangle { v1, v2, v3, v1v2, v1v3, .. } => {
+			Shape::Triangle {
+				v1,
+				v2,
+				v3,
+				v1v2,
+				v1v3,
+				..
+			} => {
 				let plane: algebra::Vector = ray.dir % (*v1v3);
 				let mut det: algebra::Scalar = (*v1v2) * plane;
 				if det.abs() < algebra::Scalar::EPSILON {
@@ -131,33 +157,25 @@ impl Shape {
 
 	pub fn normal(&self, point: algebra::Vector) -> algebra::Vector {
 		match self {
-			Shape::Sphere { position, radius, .. } => {
-				(point - *position).normalize()
-			}
+			Shape::Sphere {
+				position, radius, ..
+			} => (point - *position).normalize(),
 
-			Shape::Plane { position, normal, .. } => {
-				*normal
-			}
+			Shape::Plane {
+				position, normal, ..
+			} => *normal,
 
-			Shape::Triangle { v1, v2, v3, .. } => {
-				((*v2 - *v1) % (*v3 - *v1)).normalize()
-			}
+			Shape::Triangle { v1, v2, v3, .. } => ((*v2 - *v1) % (*v3 - *v1)).normalize(),
 		}
 	}
 
 	pub fn point_inside(&self) -> algebra::Vector {
 		match self {
-			Shape::Sphere { position, .. } => {
-				*position
-			}
+			Shape::Sphere { position, .. } => *position,
 
-			Shape::Plane { position, .. } => {
-				*position
-			}
+			Shape::Plane { position, .. } => *position,
 
-			Shape::Triangle { v1, v2, v3, .. } => {
-				(*v1 + *v2 + *v3) / 3.0
-			}
+			Shape::Triangle { v1, v2, v3, .. } => (*v1 + *v2 + *v3) / 3.0,
 		}
 	}
 }

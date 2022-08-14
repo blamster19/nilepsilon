@@ -21,12 +21,12 @@ impl ImageFile {
 		ImageFile {
 			width,
 			height,
-			image: vec![Pixel::default(); (width*height).try_into().unwrap()],
+			image: vec![Pixel::default(); (width * height).try_into().unwrap()],
 		}
 	}
 
-	pub fn set_pixel (&mut self, x: u32, y: u32, value: (f64, f64, f64)) {
-		let index = (y*self.width+x) as usize;
+	pub fn set_pixel(&mut self, x: u32, y: u32, value: (f64, f64, f64)) {
+		let index = (y * self.width + x) as usize;
 		self.image[index].r = value.0;
 		self.image[index].g = value.1;
 		self.image[index].b = value.2;
@@ -39,10 +39,12 @@ impl ImageFile {
 				println!("{} {}", self.width, self.height);
 				println!("255");
 				for pixel in &self.image {
-						println!("{} {} {}",
-							((pixel.r*255.0) as u8).clamp(0, 255),
-							((pixel.g*255.0) as u8).clamp(0, 255),
-							((pixel.b*255.0) as u8).clamp(0, 255));
+					println!(
+						"{} {} {}",
+						((pixel.r * 255.0) as u8).clamp(0, 255),
+						((pixel.g * 255.0) as u8).clamp(0, 255),
+						((pixel.b * 255.0) as u8).clamp(0, 255)
+					);
 				}
 			}
 		}

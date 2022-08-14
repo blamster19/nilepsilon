@@ -6,13 +6,18 @@ use crate::shaders;
 #[derive(Clone)]
 pub enum EmissionType {
 	NonEmissive,
-	Incandescent{ temperature: algebra::Scalar },
-	Cool{ temperature: algebra::Scalar, power: algebra::Scalar },
+	Incandescent {
+		temperature: algebra::Scalar,
+	},
+	Cool {
+		temperature: algebra::Scalar,
+		power: algebra::Scalar,
+	},
 }
 
 #[derive(Clone)]
 pub enum SurfaceType {
-	Dielectric{ }
+	Dielectric {},
 }
 
 #[derive(Clone)]
@@ -26,23 +31,28 @@ impl Material {
 		Self {
 			emitter,
 			bxdf: match surface {
-				Dielectric => shaders::BxDF::oren_nayar(0.5)
-			}
+				SurfaceType::Dielectric {} => shaders::BxDF::oren_nayar(0.5),
+			},
 		}
 	}
 
-	pub fn return_scatter_radiance(&self, incoming: algebra::Vector, outgoing: algebra::Vector, lambda: algebra::Scalar) -> algebra::Scalar {
+	pub fn return_scatter_radiance(
+		&self,
+		incoming: algebra::Vector,
+		outgoing: algebra::Vector,
+		lambda: algebra::Scalar,
+	) -> algebra::Scalar {
 		1.0
 	}
 
 	pub fn return_emission_radiance(&self, lambda: algebra::Scalar) -> algebra::Scalar {
 		match self.emitter {
 			EmissionType::NonEmissive => 0.0,
-			EmissionType::Incandescent{ temperature } => {
+			EmissionType::Incandescent { temperature } => {
 				constants::TWO_HC2
 					/ (lambda.powi(5) * ((constants::HC_BY_K / lambda / temperature).exp() - 1.0))
 			}
-			EmissionType::Cool{ temperature, power } => {
+			EmissionType::Cool { temperature, power } => {
 				let lmax: algebra::Scalar = constants::WIEN / temperature;
 				constants::TWO_HC2
 					/ (lambda.powi(5) * ((constants::HC_BY_K / lambda / temperature).exp() - 1.0))

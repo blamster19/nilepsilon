@@ -1,6 +1,6 @@
-use std::ops;
-use std::cmp;
 use float_eq;
+use std::cmp;
+use std::ops;
 
 //might want to change to something more/less precise depending on use case
 pub type Scalar = f64;
@@ -14,11 +14,7 @@ pub struct Vector {
 
 impl Vector {
 	pub fn new(x: Scalar, y: Scalar, z: Scalar) -> Vector {
-		Vector {
-			x,
-			y,
-			z,
-		}
+		Vector { x, y, z }
 	}
 }
 
@@ -50,7 +46,7 @@ impl ops::Sub for Vector {
 impl ops::Mul<Vector> for Vector {
 	type Output = Scalar;
 
-	fn mul(self, other: Self) ->  Scalar{
+	fn mul(self, other: Self) -> Scalar {
 		self.x * other.x + self.y * other.y + self.z * other.z
 	}
 }
@@ -111,9 +107,9 @@ impl ops::Rem for Vector {
 //equality
 impl cmp::PartialEq for Vector {
 	fn eq(&self, other: &Self) -> bool {
-		float_eq::float_eq!(self.x, other.x, rmax <= Scalar::EPSILON) &&
-		float_eq::float_eq!(self.y, other.y, rmax <= Scalar::EPSILON) &&
-		float_eq::float_eq!(self.z, other.z, rmax <= Scalar::EPSILON)
+		float_eq::float_eq!(self.x, other.x, rmax <= Scalar::EPSILON)
+			&& float_eq::float_eq!(self.y, other.y, rmax <= Scalar::EPSILON)
+			&& float_eq::float_eq!(self.z, other.z, rmax <= Scalar::EPSILON)
 	}
 }
 
@@ -127,6 +123,6 @@ impl Vector {
 	}
 
 	pub fn normalize(self) -> Vector {
-		self/self.norm()
+		self / self.norm()
 	}
 }

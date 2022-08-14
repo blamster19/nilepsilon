@@ -28,10 +28,9 @@ impl Background {
 				let lmax: algebra::Scalar = constants::WIEN / temperature;
 				constants::TWO_HC2
 					/ (lambda.powi(5) * ((constants::HC_BY_K / lambda / temperature).exp() - 1.0))
-					/ (
-				constants::TWO_HC2
-					/ (lmax.powi(5) * ((constants::HC_BY_K / lmax / temperature).exp() - 1.0))
-				) * self.radiance
+					/ (constants::TWO_HC2
+						/ (lmax.powi(5) * ((constants::HC_BY_K / lmax / temperature).exp() - 1.0)))
+					* self.radiance
 			}
 		}
 	}

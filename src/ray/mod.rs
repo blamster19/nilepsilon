@@ -8,10 +8,7 @@ pub struct Ray {
 
 impl Ray {
 	pub fn new(orig: algebra::Vector, dir: algebra::Vector) -> Ray {
-		Ray {
-			orig,
-			dir,
-		}
+		Ray { orig, dir }
 	}
 
 	pub fn point_on_line(&self, t: algebra::Scalar) -> algebra::Vector {

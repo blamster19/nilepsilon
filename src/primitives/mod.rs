@@ -144,4 +144,20 @@ impl Shape {
 			}
 		}
 	}
+
+	pub fn point_inside(&self) -> algebra::Vector {
+		match self {
+			Shape::Sphere { position, .. } => {
+				*position
+			}
+
+			Shape::Plane { position, .. } => {
+				*position
+			}
+
+			Shape::Triangle { v1, v2, v3, .. } => {
+				(*v1 + *v2 + *v3) / 3.0
+			}
+		}
+	}
 }

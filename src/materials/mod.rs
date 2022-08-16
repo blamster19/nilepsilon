@@ -3,7 +3,9 @@ use crate::constants;
 use crate::ray;
 use crate::shaders;
 
-#[derive(Clone)]
+type Color = Vec<algebra::Scalar>;
+
+#[derive(Clone, PartialEq)]
 pub enum EmissionType {
 	NonEmissive,
 	Incandescent {
@@ -15,23 +17,25 @@ pub enum EmissionType {
 	},
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum SurfaceType {
-	Dielectric {},
+	Dielectric { sigma: algebra::Scalar },
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Material {
 	pub emitter: EmissionType,
 	bxdf: shaders::BxDF,
+	pub color: Color,
 }
 
 impl Material {
-	pub fn new(emitter: EmissionType, surface: SurfaceType) -> Self {
+	pub fn new(emitter: EmissionType, surface: SurfaceType, color: Color) -> Self {
 		Self {
 			emitter,
+			color,
 			bxdf: match surface {
-				SurfaceType::Dielectric {} => shaders::BxDF::oren_nayar(0.5),
+				SurfaceType::Dielectric { sigma } => shaders::BxDF::oren_nayar(sigma),
 			},
 		}
 	}
@@ -40,9 +44,10 @@ impl Material {
 		&self,
 		incoming: algebra::Vector,
 		outgoing: algebra::Vector,
+		normal: algebra::Vector,
 		lambda: algebra::Scalar,
 	) -> algebra::Scalar {
-		1.0
+		self.return_color(lambda) * self.bxdf.compute_bxdf(incoming, outgoing, normal, lambda)
 	}
 
 	pub fn return_emission_radiance(&self, lambda: algebra::Scalar) -> algebra::Scalar {
@@ -60,6 +65,20 @@ impl Material {
 						/ (lmax.powi(5) * ((constants::HC_BY_K / lmax / temperature).exp() - 1.0)))
 					* power
 			}
+		}
+	}
+
+	fn return_color(&self, lambda: algebra::Scalar) -> algebra::Scalar {
+		let mut color: algebra::Scalar = 0.0;
+		for (power, coefficient) in self.color.iter().enumerate() {
+			color += coefficient * lambda.powi(power.try_into().unwrap());
+		}
+		if color > 1.0 {
+			return 1.0;
+		} else if color < 0.0 {
+			return 0.0;
+		} else {
+			return color;
 		}
 	}
 }

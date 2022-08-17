@@ -2,6 +2,7 @@ use crate::algebra;
 use crate::materials;
 use crate::ray;
 
+#[derive(PartialEq)]
 pub struct Primitive {
 	pub shape: Shape,
 	pub material: materials::Material,
@@ -55,7 +56,7 @@ impl Primitive {
 	}
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum Shape {
 	Sphere {
 		position: algebra::Vector,
@@ -169,13 +170,19 @@ impl Shape {
 		}
 	}
 
-	pub fn point_inside(&self) -> algebra::Vector {
+	pub fn point_inside(&self, rand: (f64, f64, f64)) -> algebra::Vector {
 		match self {
-			Shape::Sphere { position, .. } => *position,
+			Shape::Sphere { position, .. } => *position + algebra::Vector::new(rand.0, rand.1, rand.2),
 
 			Shape::Plane { position, .. } => *position,
 
-			Shape::Triangle { v1, v2, v3, .. } => (*v1 + *v2 + *v3) / 3.0,
+			Shape::Triangle { v1, v2, v3, v1v2, v1v3, .. } => {
+				if rand.0 + rand.1 > 1.0 {
+					return (*v1v2) * rand.0 + (*v1v3) * rand.1;
+				} else {
+					return (*v1v2) * (1.0 - rand.0) + (*v1v3) * (1.0 - rand.1);
+				}
+			}
 		}
 	}
 }

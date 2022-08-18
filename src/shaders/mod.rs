@@ -1,6 +1,6 @@
 use crate::algebra;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum BxDF {
 	OrenNayar {
 		a: algebra::Scalar,
@@ -21,6 +21,15 @@ impl BxDF {
 		BxDF::OrenNayar {
 			a: 1.0 - 0.5 * sigma2 / (sigma2 + 0.33),
 			b: 0.45 * sigma2 / (sigma2 + 0.09),
+		}
+	}
+
+	// vectors in BSDF functions all point outward, but the outgoing vector is passed facing towards the shaded surface
+	pub fn compute_bxdf (&self, incoming: algebra::Vector, outgoing: algebra::Vector, normal: algebra::Vector, lambda: algebra::Scalar) -> algebra::Scalar {
+		match self {
+			BxDF::OrenNayar { a, b } => {
+				1.0
+			}
 		}
 	}
 }

@@ -73,10 +73,13 @@ impl Renderer {
 		let mut rand_x: algebra::Scalar;
 		let mut rand_y: algebra::Scalar;
 		let mut wavelength: algebra::Scalar;
-		let mut radiance: algebra::Scalar = 0.0;
+		let mut wavelength_bunch: algebra::WavelengthBunch;
+		let mut radiance = algebra::WavelengthBunch(0.0, 0.0, 0.0, 0.0);
 		let mut temp_color: RawPixel;
 		let camera_samples = sampler.random_list_2d(self.aa_samples, -1.0, 1.0);
 		let wavelength_samples = sampler.random_list_1d(self.aa_samples, 360.0e-9, 650.0e-9);
+		// source: https://jo.dreggn.org/home/2014_herowavelength.pdf
+		let rot_func = |lambda, j| ((lambda * 1e9 - 360.0 + j / 4.0 * 290.0) as i32 % 290 + 360) as algebra::Scalar *1e-9;
 
 		for i in 0..self.aa_samples {
 			// generate camera ray
@@ -91,13 +94,34 @@ impl Renderer {
 
 			// integrate
 			wavelength = wavelength_samples[i];
-			radiance = self.integrate(primary_ray, self.max_depth, wavelength, &mut sampler);
+			wavelength_bunch = algebra::WavelengthBunch(wavelength, rot_func(wavelength, 1.0), rot_func(wavelength, 2.0), rot_func(wavelength, 3.0));
+			radiance = self.integrate(primary_ray, self.max_depth, wavelength_bunch, &mut sampler);
 
 			// compute color
-			temp_color = self.wavelength_to_xyz(wavelength);
-			output_color.0 += temp_color.0 * radiance;
-			output_color.1 += temp_color.1 * radiance;
-			output_color.2 += temp_color.2 * radiance;
+			let tc0 = self.wavelength_to_xyz(wavelength_bunch.0);
+			let tc1 = self.wavelength_to_xyz(wavelength_bunch.1);
+			let tc2 = self.wavelength_to_xyz(wavelength_bunch.2);
+			let tc3 = self.wavelength_to_xyz(wavelength_bunch.3);
+			temp_color = (
+				(tc0.0 * radiance.0
+				+ tc1.0 * radiance.1
+				+ tc2.0 * radiance.2
+				+ tc3.0 * radiance.3
+				) / 4.0,
+				(tc0.1 * radiance.0
+				+ tc1.1 * radiance.1
+				+ tc2.1 * radiance.2
+				+ tc3.1 * radiance.3
+				) / 4.0,
+				(tc0.2 * radiance.0
+				+ tc1.2 * radiance.1
+				+ tc2.2 * radiance.2
+				+ tc3.2 * radiance.3
+				) / 4.0
+				);
+			output_color.0 += temp_color.0;
+			output_color.1 += temp_color.1;
+			output_color.2 += temp_color.2;
 		}
 		output_color.0 /= self.aa_samples as f64;
 		output_color.1 /= self.aa_samples as f64;
@@ -109,9 +133,9 @@ impl Renderer {
 		&self,
 		ray: ray::Ray,
 		depth: u32,
-		wavelength: algebra::Scalar,
+		wavelengths: algebra::WavelengthBunch,
 		sampler: &mut sampler::Sampler,
-	) -> algebra::Scalar {
+	) -> algebra::WavelengthBunch {
 		// find closest intersection
 		let closest_obj: std::option::Option<&primitives::Primitive>;
 		let intersection: algebra::Vector;
@@ -120,23 +144,37 @@ impl Renderer {
 			self.find_intersection(&ray, algebra::Scalar::EPSILON, algebra::Scalar::MAX);
 
 		match closest_obj {
-			std::option::Option::None => self.scene.background.return_radiance(ray.dir, wavelength),
+			std::option::Option::None => algebra::WavelengthBunch(self.scene.background.return_radiance(ray.dir, wavelengths.0),
+				self.scene.background.return_radiance(ray.dir, wavelengths.1),
+				self.scene.background.return_radiance(ray.dir, wavelengths.2),
+				self.scene.background.return_radiance(ray.dir, wavelengths.3)),
 			std::option::Option::Some(object) => {
-				let mut radiance: algebra::Scalar =
-					object.material.return_emission_radiance(wavelength);
+				let mut radiance = algebra::WavelengthBunch(
+					object.material.return_emission_radiance(wavelengths.0),
+					object.material.return_emission_radiance(wavelengths.1),
+					object.material.return_emission_radiance(wavelengths.2),
+					object.material.return_emission_radiance(wavelengths.3));
 				if depth > 0 {
 					// pick random direction
 					let rand_rays: Vec<(f64, f64, f64)> = sampler.random_list_3d_sphere(self.lights.len() + 1);
 					let mut next_ray: ray::Ray =
 						self.random_ray_outside(intersection, normal, rand_rays[0]);
-					let mut contrib: algebra::Scalar =
-						self.integrate(next_ray, depth - 1, wavelength, sampler);
-					contrib *=
+					let mut contrib = self.integrate(next_ray, depth - 1, wavelengths, sampler);
+					let mut surface_response = algebra::WavelengthBunch(
 						object
 							.material
-							.return_scatter_radiance(next_ray.dir, ray.dir, normal, wavelength);
-			//				* (normal * next_ray.dir);
-					radiance += contrib;
+							.return_scatter_radiance(next_ray.dir, ray.dir, normal, wavelengths.0),
+						object
+							.material
+							.return_scatter_radiance(next_ray.dir, ray.dir, normal, wavelengths.1),
+						object
+							.material
+							.return_scatter_radiance(next_ray.dir, ray.dir, normal, wavelengths.2),
+						object
+							.material
+							.return_scatter_radiance(next_ray.dir, ray.dir, normal, wavelengths.3));
+					contrib = contrib * surface_response;
+					radiance = radiance + contrib;
 					// explicitly sample lights
 					for (index, light) in self.lights.iter().enumerate() {
 						next_ray = ray::Ray::new(
@@ -145,13 +183,22 @@ impl Renderer {
 								.normalize(),
 						);
 						if self.scene.objects.iter().position(|check| check == object) != Some(*light) {
-							contrib =
-								self.integrate(next_ray, 0, wavelength, sampler);
-							contrib *=
+							contrib = self.integrate(next_ray, 0, wavelengths, sampler);
+							surface_response = algebra::WavelengthBunch(
 								object
 									.material
-									.return_scatter_radiance(next_ray.dir, ray.dir, normal, wavelength);
-							radiance += contrib;
+									.return_scatter_radiance(next_ray.dir, ray.dir, normal, wavelengths.0),
+								object
+									.material
+									.return_scatter_radiance(next_ray.dir, ray.dir, normal, wavelengths.1),
+								object
+									.material
+									.return_scatter_radiance(next_ray.dir, ray.dir, normal, wavelengths.2),
+								object
+									.material
+									.return_scatter_radiance(next_ray.dir, ray.dir, normal, wavelengths.3));
+							contrib = contrib * surface_response;
+							radiance = radiance + contrib;
 						}
 					}
 				}

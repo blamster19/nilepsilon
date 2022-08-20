@@ -126,3 +126,32 @@ impl Vector {
 		self / self.norm()
 	}
 }
+
+#[derive(Clone, Copy)]
+pub struct WavelengthBunch(pub Scalar, pub Scalar, pub Scalar, pub Scalar);
+
+impl ops::Add for WavelengthBunch {
+	type Output = Self;
+
+	fn add(self, other: Self) -> Self {
+		WavelengthBunch(
+			self.0 + other.0,
+			self.1 + other.1,
+			self.2 + other.2,
+			self.3 + other.3,
+		)
+	}
+}
+
+impl ops::Mul<WavelengthBunch> for WavelengthBunch {
+	type Output = Self;
+
+	fn mul(self, other: Self) -> WavelengthBunch {
+		WavelengthBunch(
+			self.0 * other.0,
+			self.1 * other.1,
+			self.2 * other.2,
+			self.3 * other.3,
+		)
+	}
+}

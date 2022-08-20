@@ -179,7 +179,7 @@ impl Renderer {
 					for (index, light) in self.lights.iter().enumerate() {
 						next_ray = ray::Ray::new(
 							intersection,
-							(self.scene.objects[*light].shape.point_inside(rand_rays[1 + index]) - intersection)
+							(self.scene.objects[*light].shape.point_on_surface(rand_rays[1 + index]) - intersection)
 								.normalize(),
 						);
 						if self.scene.objects.iter().position(|check| check == object) != Some(*light) {

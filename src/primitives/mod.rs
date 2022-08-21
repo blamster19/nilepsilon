@@ -177,10 +177,10 @@ impl Shape {
 			Shape::Plane { position, .. } => *position,
 
 			Shape::Triangle { v1, v2, v3, v1v2, v1v3, .. } => {
-				if rand.0 + rand.1 > 1.0 {
-					return (*v1v2) * rand.0 + (*v1v3) * rand.1;
+				if rand.0 + rand.1 < 1.0 {
+					return *v1 + (*v1v2) * rand.0 + (*v1v3) * rand.1;
 				} else {
-					return (*v1v2) * (1.0 - rand.0) + (*v1v3) * (1.0 - rand.1);
+					return *v1 + (*v1v2) * (1.0 - rand.0) + (*v1v3) * (1.0 - rand.1);
 				}
 			}
 		}

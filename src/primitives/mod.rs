@@ -172,7 +172,7 @@ impl Shape {
 
 	pub fn point_on_surface(&self, rand: (f64, f64, f64)) -> algebra::Vector {
 		match self {
-			Shape::Sphere { position, .. } => *position + algebra::Vector::new(rand.0, rand.1, rand.2),
+			Shape::Sphere { position, radius, .. } => *position + algebra::Vector::new(rand.0, rand.1, rand.2) * *radius,
 
 			Shape::Plane { position, .. } => *position,
 

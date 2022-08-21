@@ -236,7 +236,7 @@ impl Renderer {
 			match obj.shape.intersect(&ray, min, max) {
 				std::option::Option::Some(point) => {
 					let norm = (point - ray.orig).norm();
-					if norm < d && norm > algebra::Scalar::EPSILON {
+					if norm < d && norm > min {
 						d = norm;
 						closest_obj = std::option::Option::Some(obj);
 						intersection = point;

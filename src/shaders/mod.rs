@@ -1,4 +1,5 @@
 use crate::algebra;
+use crate::constants;
 
 #[derive(Clone, PartialEq)]
 pub enum BxDF {
@@ -28,7 +29,16 @@ impl BxDF {
 	pub fn compute_bxdf (&self, incoming: algebra::Vector, outgoing: algebra::Vector, normal: algebra::Vector, lambda: algebra::Scalar) -> algebra::Scalar {
 		match self {
 			BxDF::OrenNayar { a, b } => {
-				1.0
+				let pdf = incoming * normal * constants::PI_INV;
+				if pdf > 0.0 { pdf } else { 0.0 }
+			}
+		}
+	}
+
+	pub fn pdf (&self, incoming: algebra::Vector, outgoing: algebra::Vector, normal: algebra::Vector, lambda: algebra::Scalar) -> algebra::Scalar {
+		match self {
+			BxDF::OrenNayar { a, b } => {
+				incoming * normal * constants::PI_INV
 			}
 		}
 	}

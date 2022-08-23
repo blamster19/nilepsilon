@@ -3,6 +3,8 @@ use crate::algebra;
 pub const HC_BY_K: algebra::Scalar = 0.01439;
 pub const TWO_HC2: algebra::Scalar = 1.191e-16;
 pub const WIEN: algebra::Scalar = 2.89777196e-3;
+pub const PI_INV: algebra::Scalar = 0.3183098862;
+pub const PI: algebra::Scalar = 3.1415926536;
 
 // source:
 // https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer

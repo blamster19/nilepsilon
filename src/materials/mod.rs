@@ -68,6 +68,15 @@ impl Material {
 		}
 	}
 
+	pub fn return_direction(
+		&self,
+		outgoing: algebra::Vector,
+		normal: algebra::Vector,
+		random: (f64, f64, f64),
+	) -> algebra::Vector {
+		algebra::Vector::new(random.0, random.1, random.2) + normal
+	}
+
 	fn return_color(&self, lambda: algebra::Scalar) -> algebra::Scalar {
 		let mut color: algebra::Scalar = 0.0;
 		for (power, coefficient) in self.color.iter().enumerate() {

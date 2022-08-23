@@ -200,7 +200,33 @@ impl Renderer {
 							wavelengths.3,
 						),
 					);
-					contrib = contrib * surface_response;
+					let mut sample_pdf_inv = algebra::WavelengthBunch(
+						1.0 / object.material.return_pdf(
+							next_ray.dir,
+							ray.dir,
+							normal,
+							wavelengths.0,
+						),
+						1.0 / object.material.return_pdf(
+							next_ray.dir,
+							ray.dir,
+							normal,
+							wavelengths.1,
+						),
+						1.0 / object.material.return_pdf(
+							next_ray.dir,
+							ray.dir,
+							normal,
+							wavelengths.2,
+						),
+						1.0 / object.material.return_pdf(
+							next_ray.dir,
+							ray.dir,
+							normal,
+							wavelengths.3,
+						),
+					);
+					contrib = contrib * surface_response * sample_pdf_inv;
 					radiance = radiance + contrib;
 					// explicitly sample lights
 					//				for (index, light) in self.lights.iter().enumerate() {

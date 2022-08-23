@@ -77,6 +77,16 @@ impl Material {
 		algebra::Vector::new(random.0, random.1, random.2) + normal
 	}
 
+	pub fn return_pdf(
+		&self,
+		incoming: algebra::Vector,
+		outgoing: algebra::Vector,
+		normal: algebra::Vector,
+		lambda: algebra::Scalar,
+	) -> algebra::Scalar {
+		self.bxdf.pdf(incoming, outgoing, normal, lambda)
+	}
+
 	fn return_color(&self, lambda: algebra::Scalar) -> algebra::Scalar {
 		let mut color: algebra::Scalar = 0.0;
 		for (power, coefficient) in self.color.iter().enumerate() {

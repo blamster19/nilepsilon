@@ -29,8 +29,7 @@ impl BxDF {
 	pub fn compute_bxdf (&self, incoming: algebra::Vector, outgoing: algebra::Vector, normal: algebra::Vector, lambda: algebra::Scalar) -> algebra::Scalar {
 		match self {
 			BxDF::OrenNayar { a, b } => {
-				let pdf = incoming * normal * constants::PI_INV;
-				if pdf > 0.0 { pdf } else { 0.0 }
+				constants::PI_INV
 			}
 		}
 	}

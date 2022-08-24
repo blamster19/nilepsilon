@@ -226,7 +226,9 @@ impl Renderer {
 							wavelengths.3,
 						),
 					);
-					contrib = contrib * surface_response * sample_pdf_inv;
+					let cos_theta_i = (normal * next_ray.dir).abs();
+					let cti = algebra::WavelengthBunch(cos_theta_i, cos_theta_i, cos_theta_i, cos_theta_i);
+					contrib = contrib * surface_response * sample_pdf_inv * cti;
 					radiance = radiance + contrib;
 					// explicitly sample lights
 					//				for (index, light) in self.lights.iter().enumerate() {

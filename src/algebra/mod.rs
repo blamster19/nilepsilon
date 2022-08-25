@@ -155,3 +155,19 @@ impl ops::Mul<WavelengthBunch> for WavelengthBunch {
 		)
 	}
 }
+
+pub struct Basis {
+	// vectors given in world basis
+	pub u: Vector,
+	pub v: Vector,
+	pub w: Vector,
+}
+
+impl Basis {
+	pub fn new(u: Vector, v: Vector, w: Vector) -> Self {
+		Self { u, v, w }
+	}
+	pub fn basis_to_world(&self, vector: Vector) -> Vector {
+		self.u * vector.x + self.v * vector.y + self.w * vector.z
+	}
+}

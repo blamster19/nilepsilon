@@ -87,6 +87,21 @@ impl Material {
 		self.bxdf.pdf(incoming, outgoing, normal, lambda)
 	}
 
+	pub fn new_basis(
+		&self,
+		normal: algebra::Vector,
+	) -> (algebra::Vector, algebra::Vector, algebra::Vector) {
+		let a: algebra::Vector;
+		if normal.x > 1.0 - algebra::Scalar::EPSILON {
+			a = algebra::Vector::new(0.0, 1.0, 0.0);
+		} else {
+			a = algebra::Vector::new(1.0, 0.0, 0.0);
+		}
+		let x = normal % a;
+		let y = normal % x;
+		(x.normalize(), y.normalize(), normal)
+	}
+
 	fn return_color(&self, lambda: algebra::Scalar) -> algebra::Scalar {
 		let mut color: algebra::Scalar = 0.0;
 		for (power, coefficient) in self.color.iter().enumerate() {

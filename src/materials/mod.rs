@@ -72,9 +72,13 @@ impl Material {
 		&self,
 		outgoing: algebra::Vector,
 		normal: algebra::Vector,
-		random: (f64, f64, f64),
+		random: (f64, f64),
 	) -> algebra::Vector {
-		algebra::Vector::new(random.0, random.1, random.2) + normal
+		let r1 = random.0;
+		let r2 = random.1;
+		let z = (1.0 - r2).sqrt();
+		let phi = 2.0 * constants::PI * r1;
+		algebra::Vector::new(phi.cos() * r2.sqrt(), phi.sin() * r2.sqrt(), z)
 	}
 
 	pub fn return_pdf(
@@ -87,10 +91,7 @@ impl Material {
 		self.bxdf.pdf(incoming, outgoing, normal, lambda)
 	}
 
-	pub fn new_basis(
-		&self,
-		normal: algebra::Vector,
-	) -> (algebra::Vector, algebra::Vector, algebra::Vector) {
+	pub fn new_basis(&self, normal: algebra::Vector) -> algebra::Basis {
 		let a: algebra::Vector;
 		if normal.x > 1.0 - algebra::Scalar::EPSILON {
 			a = algebra::Vector::new(0.0, 1.0, 0.0);
@@ -99,7 +100,7 @@ impl Material {
 		}
 		let x = normal % a;
 		let y = normal % x;
-		(x.normalize(), y.normalize(), normal)
+		algebra::Basis::new(x.normalize(), y.normalize(), normal)
 	}
 
 	fn return_color(&self, lambda: algebra::Scalar) -> algebra::Scalar {

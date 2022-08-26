@@ -93,7 +93,7 @@ impl Material {
 
 	pub fn new_basis(&self, normal: algebra::Vector) -> algebra::Basis {
 		let a: algebra::Vector;
-		if normal.x > 1.0 - algebra::Scalar::EPSILON {
+		if normal.x.abs() > 1.0 - algebra::Scalar::EPSILON {
 			a = algebra::Vector::new(0.0, 1.0, 0.0);
 		} else {
 			a = algebra::Vector::new(1.0, 0.0, 0.0);

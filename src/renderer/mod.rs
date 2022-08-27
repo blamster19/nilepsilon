@@ -165,13 +165,16 @@ impl Renderer {
 				);
 				if depth > 0 {
 					// pick random direction
-					let rand_rays: Vec<(f64, f64, f64)> =
-						sampler.random_list_3d_sphere(self.lights.len() + 1);
+					let rand_rays: Vec<(f64, f64)> =
+						sampler.random_list_2d(self.lights.len() + 1, 0.0, 1.0);
+					let basis: algebra::Basis = object.material.new_basis(normal);
 					let mut next_ray: ray::Ray = ray::Ray::new(
 						intersection,
-						object
-							.material
-							.return_direction(ray.dir, normal, rand_rays[0]),
+						basis.basis_to_world(object.material.return_direction(
+							ray.dir,
+							normal,
+							rand_rays[0],
+						)),
 					);
 					let mut contrib = self.integrate(next_ray, depth - 1, wavelengths, sampler);
 					let mut surface_response = algebra::WavelengthBunch(
@@ -227,7 +230,12 @@ impl Renderer {
 						),
 					);
 					let cos_theta_i = (normal * next_ray.dir).abs();
-					let cti = algebra::WavelengthBunch(cos_theta_i, cos_theta_i, cos_theta_i, cos_theta_i);
+					let cti = algebra::WavelengthBunch(
+						cos_theta_i,
+						cos_theta_i,
+						cos_theta_i,
+						cos_theta_i,
+					);
 					contrib = contrib * surface_response * sample_pdf_inv * cti;
 					radiance = radiance + contrib;
 					// explicitly sample lights

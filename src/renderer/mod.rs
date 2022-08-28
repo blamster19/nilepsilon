@@ -238,32 +238,6 @@ impl Renderer {
 					);
 					contrib = contrib * surface_response * sample_pdf_inv * cti;
 					radiance = radiance + contrib;
-					// explicitly sample lights
-					//				for (index, light) in self.lights.iter().enumerate() {
-					//					next_ray = ray::Ray::new(
-					//						intersection,
-					//						(self.scene.objects[*light].shape.point_on_surface(rand_rays[1 + index]) - intersection)
-					//							.normalize(),
-					//					);
-					//					if self.scene.objects.iter().position(|check| check == object) != Some(*light) {
-					//						contrib = self.integrate(next_ray, 0, wavelengths, sampler);
-					//						surface_response = algebra::WavelengthBunch(
-					//							object
-					//								.material
-					//								.return_scatter_radiance(next_ray.dir, ray.dir, normal, wavelengths.0),
-					//							object
-					//								.material
-					//								.return_scatter_radiance(next_ray.dir, ray.dir, normal, wavelengths.1),
-					//							object
-					//								.material
-					//								.return_scatter_radiance(next_ray.dir, ray.dir, normal, wavelengths.2),
-					//							object
-					//								.material
-					//								.return_scatter_radiance(next_ray.dir, ray.dir, normal, wavelengths.3));
-					//						contrib = contrib * surface_response;
-					//						radiance = radiance + contrib;
-					//					}
-					//				}
 				}
 				radiance
 			}

@@ -170,4 +170,11 @@ impl Basis {
 	pub fn basis_to_world(&self, vector: Vector) -> Vector {
 		self.u * vector.x + self.v * vector.y + self.w * vector.z
 	}
+	pub fn spherical_to_basis(&self, theta: Scalar, phi: Scalar) -> Vector {
+		Vector::new(
+			phi.cos() * theta.sin(),
+			phi.sin() * theta.sin(),
+			theta.cos(),
+		)
+	}
 }

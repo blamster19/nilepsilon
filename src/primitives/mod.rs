@@ -1,4 +1,5 @@
 use crate::algebra;
+use crate::constants;
 use crate::materials;
 use crate::ray;
 
@@ -170,9 +171,13 @@ impl Shape {
 		}
 	}
 
-	pub fn point_on_surface(&self, rand: (f64, f64, f64)) -> algebra::Vector {
+	pub fn point_on_surface(&self, rand: (f64, f64)) -> algebra::Vector {
 		match self {
-			Shape::Sphere { position, radius, .. } => *position + algebra::Vector::new(rand.0, rand.1, rand.2) * *radius,
+			Shape::Sphere { position, radius, .. } => {
+				let theta = rand.0 * 2.0 * constants::PI;
+				let phi = rand.1 * constants::PI;
+				*position + algebra::Vector::new(phi.cos() * theta.sin(), phi.sin() * theta.sin(), theta.cos()) * *radius
+			}
 
 			Shape::Plane { position, .. } => *position,
 

@@ -1,6 +1,10 @@
 use crate::algebra;
 use crate::constants;
 
+pub enum Lobe {
+	Cosine,
+}
+
 #[derive(Clone, PartialEq)]
 pub enum BxDF {
 	OrenNayar {
@@ -25,20 +29,34 @@ impl BxDF {
 		}
 	}
 
-	// vectors in BSDF functions all point outward, but the outgoing vector is passed facing towards the shaded surface
-	pub fn compute_bxdf (&self, incoming: algebra::Vector, outgoing: algebra::Vector, normal: algebra::Vector, lambda: algebra::Scalar) -> algebra::Scalar {
+	pub fn lobe(&self) -> Lobe {
 		match self {
-			BxDF::OrenNayar { a, b } => {
-				constants::PI_INV
-			}
+			BxDF::OrenNayar { .. } => Lobe::Cosine,
 		}
 	}
 
-	pub fn pdf (&self, incoming: algebra::Vector, outgoing: algebra::Vector, normal: algebra::Vector, lambda: algebra::Scalar) -> algebra::Scalar {
+	// vectors in BSDF functions all point outward, but the outgoing vector is passed facing towards the shaded surface
+	pub fn compute_bxdf(
+		&self,
+		incoming: algebra::Vector,
+		outgoing: algebra::Vector,
+		normal: algebra::Vector,
+		lambda: algebra::Scalar,
+	) -> algebra::Scalar {
 		match self {
-			BxDF::OrenNayar { a, b } => {
-				incoming * normal * constants::PI_INV
-			}
+			BxDF::OrenNayar { a, b } => constants::PI_INV,
+		}
+	}
+
+	pub fn pdf(
+		&self,
+		incoming: algebra::Vector,
+		outgoing: algebra::Vector,
+		normal: algebra::Vector,
+		lambda: algebra::Scalar,
+	) -> algebra::Scalar {
+		match self {
+			BxDF::OrenNayar { a, b } => incoming * normal * constants::PI_INV,
 		}
 	}
 }

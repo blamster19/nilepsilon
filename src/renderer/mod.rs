@@ -164,17 +164,22 @@ impl Renderer {
 					object.material.return_emission_radiance(wavelengths.3),
 				);
 				if depth > 0 {
-					// pick random direction
-					let rand_rays: Vec<(f64, f64)> =
-						sampler.random_list_2d(self.lights.len() + 1, 0.0, 1.0);
+					let mut theta_o: algebra::Scalar = 0.0;
+					let mut phi_o: algebra::Scalar = 0.0;
+					let mut theta_i: algebra::Scalar = 0.0;
+					let mut phi_i: algebra::Scalar = 0.0;
 					let basis: algebra::Basis = object.material.new_basis(normal);
+
+					// pick random direction
+					let rand_rays: Vec<(f64, f64)> = sampler.random_list_2d(1, 0.0, 1.0);
+					(theta_o, phi_o) =
+						object
+							.material
+							.return_direction(theta_i, phi_i, rand_rays[0]);
+
 					let mut next_ray: ray::Ray = ray::Ray::new(
 						intersection,
-						basis.basis_to_world(object.material.return_direction(
-							ray.dir,
-							normal,
-							rand_rays[0],
-						)),
+						basis.basis_to_world(basis.spherical_to_basis(theta_o, phi_o)),
 					);
 					let mut contrib = self.integrate(next_ray, depth - 1, wavelengths, sampler);
 					let mut surface_response = algebra::WavelengthBunch(

@@ -70,15 +70,15 @@ impl Material {
 
 	pub fn return_direction(
 		&self,
-		outgoing: algebra::Vector,
-		normal: algebra::Vector,
+		theta_i: algebra::Scalar,
+		phi_i: algebra::Scalar,
 		random: (f64, f64),
-	) -> algebra::Vector {
-		let r1 = random.0;
-		let r2 = random.1;
-		let z = (1.0 - r2).sqrt();
-		let phi = 2.0 * constants::PI * r1;
-		algebra::Vector::new(phi.cos() * r2.sqrt(), phi.sin() * r2.sqrt(), z)
+	) -> (algebra::Scalar, algebra::Scalar) {
+		match self.bxdf.lobe() {
+			shaders::Lobe::Cosine => {
+				(random.0 * 0.5 * constants::PI, random.1 * 2.0 * constants::PI)
+			}
+		}
 	}
 
 	pub fn return_pdf(

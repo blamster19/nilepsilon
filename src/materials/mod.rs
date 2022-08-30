@@ -3,8 +3,6 @@ use crate::constants;
 use crate::ray;
 use crate::shaders;
 
-type Color = Vec<algebra::Scalar>;
-
 #[derive(Clone, PartialEq)]
 pub enum EmissionType {
 	NonEmissive,
@@ -19,23 +17,21 @@ pub enum EmissionType {
 
 #[derive(Clone, PartialEq)]
 pub enum SurfaceType {
-	Dielectric { sigma: algebra::Scalar },
+	Dielectric { sigma: algebra::Scalar, color: shaders::Color },
 }
 
 #[derive(Clone, PartialEq)]
 pub struct Material {
 	pub emitter: EmissionType,
 	bxdf: shaders::BxDF,
-	pub color: Color,
 }
 
 impl Material {
-	pub fn new(emitter: EmissionType, surface: SurfaceType, color: Color) -> Self {
+	pub fn new(emitter: EmissionType, surface: SurfaceType) -> Self {
 		Self {
 			emitter,
-			color,
 			bxdf: match surface {
-				SurfaceType::Dielectric { sigma } => shaders::BxDF::oren_nayar(sigma),
+				SurfaceType::Dielectric { sigma, color } => shaders::BxDF::oren_nayar(sigma, color),
 			},
 		}
 	}
@@ -48,7 +44,8 @@ impl Material {
 		phi_o: algebra::Scalar,
 		lambda: algebra::Scalar,
 	) -> algebra::Scalar {
-		self.return_color(lambda) * self.bxdf.compute_bxdf(theta_i, phi_i, theta_o, phi_o, lambda)
+		self.bxdf
+			.compute_bxdf(theta_i, phi_i, theta_o, phi_o, lambda)
 	}
 
 	pub fn return_emission_radiance(&self, lambda: algebra::Scalar) -> algebra::Scalar {
@@ -76,9 +73,10 @@ impl Material {
 		random: (f64, f64),
 	) -> (algebra::Scalar, algebra::Scalar) {
 		match self.bxdf.lobe() {
-			shaders::Lobe::Cosine => {
-				(random.0 * 0.5 * constants::PI, random.1 * 2.0 * constants::PI)
-			}
+			shaders::Lobe::Cosine => (
+				random.0 * 0.5 * constants::PI,
+				random.1 * 2.0 * constants::PI,
+			),
 		}
 	}
 
@@ -102,19 +100,5 @@ impl Material {
 		let x = normal % a;
 		let y = normal % x;
 		algebra::Basis::new(x.normalize(), y.normalize(), normal)
-	}
-
-	fn return_color(&self, lambda: algebra::Scalar) -> algebra::Scalar {
-		let mut color: algebra::Scalar = 0.0;
-		for (power, coefficient) in self.color.iter().enumerate() {
-			color += coefficient * lambda.powi(power.try_into().unwrap());
-		}
-		if color > 1.0 {
-			return 1.0;
-		} else if color < 0.0 {
-			return 0.0;
-		} else {
-			return color;
-		}
 	}
 }

@@ -1,5 +1,8 @@
 use crate::algebra;
 use crate::constants;
+use std::cmp;
+
+pub type Color = Vec<algebra::Scalar>;
 
 pub enum Lobe {
 	Cosine,
@@ -10,11 +13,12 @@ pub enum BxDF {
 	OrenNayar {
 		a: algebra::Scalar,
 		b: algebra::Scalar,
+		color: Color,
 	},
 }
 
 impl BxDF {
-	pub fn oren_nayar(sigma: algebra::Scalar) -> BxDF {
+	pub fn oren_nayar(sigma: algebra::Scalar, color: Color) -> BxDF {
 		let sigma2;
 		if sigma * sigma > 1.0 {
 			sigma2 = 1.0;
@@ -26,6 +30,7 @@ impl BxDF {
 		BxDF::OrenNayar {
 			a: 1.0 - 0.5 * sigma2 / (sigma2 + 0.33),
 			b: 0.45 * sigma2 / (sigma2 + 0.09),
+			color,
 		}
 	}
 
@@ -45,7 +50,23 @@ impl BxDF {
 		lambda: algebra::Scalar,
 	) -> algebra::Scalar {
 		match self {
-			BxDF::OrenNayar { a, b } => constants::PI_INV,
+			BxDF::OrenNayar { a, b, color } => {
+				let alpha: algebra::Scalar;
+				let beta: algebra::Scalar;
+				if theta_i - theta_o > 0.0 {
+					alpha = theta_i;
+					beta = theta_o;
+				} else {
+					alpha = theta_o;
+					beta = theta_i;
+				}
+				let mut cos_phi = (phi_i - phi_o).cos();
+				if cos_phi < 0.0 {
+					cos_phi = 0.0;
+				}
+				return self.return_color(&color, lambda)
+					* constants::PI_INV * (a + b * cos_phi * alpha.sin() * beta.tan());
+			}
 		}
 	}
 
@@ -57,7 +78,20 @@ impl BxDF {
 		lambda: algebra::Scalar,
 	) -> algebra::Scalar {
 		match self {
-			BxDF::OrenNayar { a, b } => incoming * normal * constants::PI_INV,
+			BxDF::OrenNayar { .. } => incoming * normal * constants::PI_INV,
+		}
+	}
+	fn return_color(&self, c: &Color, lambda: algebra::Scalar) -> algebra::Scalar {
+		let mut color: algebra::Scalar = 0.0;
+		for (power, coefficient) in c.iter().enumerate() {
+			color += coefficient * lambda.powi(power.try_into().unwrap());
+		}
+		if color > 1.0 {
+			return 1.0;
+		} else if color < 0.0 {
+			return 0.0;
+		} else {
+			return color;
 		}
 	}
 }

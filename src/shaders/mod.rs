@@ -38,9 +38,10 @@ impl BxDF {
 	// vectors in BSDF functions all point outward, but the outgoing vector is passed facing towards the shaded surface
 	pub fn compute_bxdf(
 		&self,
-		incoming: algebra::Vector,
-		outgoing: algebra::Vector,
-		normal: algebra::Vector,
+		theta_i: algebra::Scalar,
+		phi_i: algebra::Scalar,
+		theta_o: algebra::Scalar,
+		phi_o: algebra::Scalar,
 		lambda: algebra::Scalar,
 	) -> algebra::Scalar {
 		match self {

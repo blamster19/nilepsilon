@@ -42,12 +42,13 @@ impl Material {
 
 	pub fn return_scatter_radiance(
 		&self,
-		incoming: algebra::Vector,
-		outgoing: algebra::Vector,
-		normal: algebra::Vector,
+		theta_i: algebra::Scalar,
+		phi_i: algebra::Scalar,
+		theta_o: algebra::Scalar,
+		phi_o: algebra::Scalar,
 		lambda: algebra::Scalar,
 	) -> algebra::Scalar {
-		self.return_color(lambda) * self.bxdf.compute_bxdf(incoming, outgoing, normal, lambda)
+		self.return_color(lambda) * self.bxdf.compute_bxdf(theta_i, phi_i, theta_o, phi_o, lambda)
 	}
 
 	pub fn return_emission_radiance(&self, lambda: algebra::Scalar) -> algebra::Scalar {

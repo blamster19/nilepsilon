@@ -151,7 +151,11 @@ impl Shape {
 						return std::option::Option::None;
 					}
 					let point_d: algebra::Scalar = (*v1v3 * q_vec) * det;
-					std::option::Option::Some(ray.point_on_line(point_d))
+					if point_d > 0.0 {
+						return std::option::Option::Some(ray.point_on_line(point_d));
+					} else {
+						return std::option::Option::None;
+					}
 				}
 			}
 		}
@@ -167,7 +171,7 @@ impl Shape {
 				position, normal, ..
 			} => *normal,
 
-			Shape::Triangle { v1, v2, v3, .. } => ((*v2 - *v1) % (*v3 - *v1)).normalize(),
+			Shape::Triangle { v1v2, v1v3, .. } => (*v1v2 % *v1v3).normalize(),
 		}
 	}
 

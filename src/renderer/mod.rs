@@ -139,7 +139,7 @@ impl Renderer {
 		let intersection: algebra::Vector;
 		let normal: algebra::Vector;
 		(closest_obj, intersection, normal) =
-			self.find_intersection(&ray, algebra::Scalar::EPSILON, algebra::Scalar::MAX);
+			self.find_intersection(&ray, algebra::Scalar::EPSILON, algebra::Scalar::INFINITY);
 
 		match closest_obj {
 			std::option::Option::None => algebra::WavelengthBunch(

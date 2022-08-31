@@ -76,7 +76,7 @@ impl Material {
 	) -> (algebra::Scalar, algebra::Scalar) {
 		match self.bxdf.lobe() {
 			shaders::Lobe::Cosine => (
-				random.0 * 0.5 * constants::PI,
+				random.0.sqrt().acos(),
 				random.1 * 2.0 * constants::PI
 			),
 			shaders::Lobe::Delta => (theta_i, phi_i + constants::PI),

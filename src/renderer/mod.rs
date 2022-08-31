@@ -214,27 +214,31 @@ impl Renderer {
 					);
 					let mut sample_pdf_inv = algebra::WavelengthBunch(
 						1.0 / object.material.return_pdf(
-							next_ray.dir,
-							ray.dir,
-							normal,
+							theta_i,
+							phi_i,
+							theta_o,
+							phi_o,
 							wavelengths.0,
 						),
 						1.0 / object.material.return_pdf(
-							next_ray.dir,
-							ray.dir,
-							normal,
+							theta_i,
+							phi_i,
+							theta_o,
+							phi_o,
 							wavelengths.1,
 						),
 						1.0 / object.material.return_pdf(
-							next_ray.dir,
-							ray.dir,
-							normal,
+							theta_i,
+							phi_i,
+							theta_o,
+							phi_o,
 							wavelengths.2,
 						),
 						1.0 / object.material.return_pdf(
-							next_ray.dir,
-							ray.dir,
-							normal,
+							theta_i,
+							phi_i,
+							theta_o,
+							phi_o,
 							wavelengths.3,
 						),
 					);

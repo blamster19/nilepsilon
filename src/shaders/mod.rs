@@ -80,14 +80,15 @@ impl BxDF {
 
 	pub fn pdf(
 		&self,
-		incoming: algebra::Vector,
-		outgoing: algebra::Vector,
-		normal: algebra::Vector,
+		theta_i: algebra::Scalar,
+		phi_i: algebra::Scalar,
+		theta_o: algebra::Scalar,
+		phi_o: algebra::Scalar,
 		lambda: algebra::Scalar,
 	) -> algebra::Scalar {
 		match self {
-			BxDF::OrenNayar { .. } => incoming * normal * constants::PI_INV,
-			BxDF::Specular {} => 1.0
+			BxDF::OrenNayar { .. } => theta_i.cos() * constants::PI_INV,
+			BxDF::Specular {} => 1.0,
 		}
 	}
 	fn return_color(&self, c: &Color, lambda: algebra::Scalar) -> algebra::Scalar {

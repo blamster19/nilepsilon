@@ -18,6 +18,7 @@ pub enum EmissionType {
 #[derive(Clone, PartialEq)]
 pub enum SurfaceType {
 	Dielectric { sigma: algebra::Scalar, color: shaders::Color },
+	Conductor {},
 }
 
 #[derive(Clone, PartialEq)]
@@ -32,6 +33,7 @@ impl Material {
 			emitter,
 			bxdf: match surface {
 				SurfaceType::Dielectric { sigma, color } => shaders::BxDF::oren_nayar(sigma, color),
+				SurfaceType::Conductor {} => shaders::BxDF::specular(),
 			},
 		}
 	}
@@ -75,8 +77,9 @@ impl Material {
 		match self.bxdf.lobe() {
 			shaders::Lobe::Cosine => (
 				random.0 * 0.5 * constants::PI,
-				random.1 * 2.0 * constants::PI,
+				random.1 * 2.0 * constants::PI
 			),
+			shaders::Lobe::Delta => (theta_i, phi_i + constants::PI),
 		}
 	}
 

@@ -6,6 +6,7 @@ pub type Color = Vec<algebra::Scalar>;
 
 pub enum Lobe {
 	Cosine,
+	Delta,
 }
 
 #[derive(Clone, PartialEq)]
@@ -15,6 +16,7 @@ pub enum BxDF {
 		b: algebra::Scalar,
 		color: Color,
 	},
+	Specular {},
 }
 
 impl BxDF {
@@ -34,9 +36,14 @@ impl BxDF {
 		}
 	}
 
+	pub fn specular() -> BxDF {
+		BxDF::Specular {}
+	}
+
 	pub fn lobe(&self) -> Lobe {
 		match self {
 			BxDF::OrenNayar { .. } => Lobe::Cosine,
+			BxDF::Specular {} => Lobe::Delta,
 		}
 	}
 
@@ -67,6 +74,7 @@ impl BxDF {
 				return self.return_color(&color, lambda)
 					* constants::PI_INV * (a + b * cos_phi * alpha.sin() * beta.tan());
 			}
+			BxDF::Specular {} => 1.0
 		}
 	}
 
@@ -79,6 +87,7 @@ impl BxDF {
 	) -> algebra::Scalar {
 		match self {
 			BxDF::OrenNayar { .. } => incoming * normal * constants::PI_INV,
+			BxDF::Specular {} => 1.0
 		}
 	}
 	fn return_color(&self, c: &Color, lambda: algebra::Scalar) -> algebra::Scalar {

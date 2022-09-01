@@ -57,21 +57,33 @@ impl BxDF {
 	) -> algebra::Scalar {
 		match self {
 			BxDF::OrenNayar { a, b, color } => {
-				let alpha: algebra::Scalar;
-				let beta: algebra::Scalar;
-				if theta_i - theta_o > 0.0 {
-					alpha = theta_i;
-					beta = theta_o;
-				} else {
-					alpha = theta_o;
-					beta = theta_i;
+				let max = |a, b| if a - b > 0.0 { a } else { b };
+				let clamp = |x, a, b| if x < a { a } else if x > b { b } else { x };
+				let mut max_cos: algebra::Scalar = 0.0;
+				let cos_theta_i = incoming.z;
+				let cos_theta_o = outgoing.z;
+				let sin_theta_i = max(0.0, 1.0 - cos_theta_i.powi(2)).sqrt();
+				let sin_theta_o = max(0.0, 1.0 - cos_theta_o.powi(2)).sqrt();
+				if sin_theta_i > 1e-4 && sin_theta_o > 1e-4 {
+					let cos_phi_i = if sin_theta_i == 0.0 { 1.0 } else { clamp(incoming.x / sin_theta_i, -1.0, 1.0) };
+					let cos_phi_o = if sin_theta_o == 0.0 { 1.0 } else { clamp(outgoing.x / sin_theta_o, -1.0, 1.0) };
+					let sin_phi_i = if sin_theta_i == 0.0 { 0.0 } else { clamp(incoming.y / sin_theta_i, -1.0, 1.0) };
+					let sin_phi_o = if sin_theta_o == 0.0 { 0.0 } else { clamp(outgoing.y / sin_theta_o, -1.0, 1.0) };
+					let d_cos = cos_phi_i * cos_phi_o + sin_phi_i * sin_phi_o;
+					max_cos = max(0.0, d_cos);
 				}
-				let mut cos_phi = (phi_i - phi_o).cos();
-				if cos_phi < 0.0 {
-					cos_phi = 0.0;
+				let sin_alpha: algebra::Scalar;
+				let tan_beta: algebra::Scalar;
+
+				if cos_theta_i.abs() > cos_theta_o.abs() {
+					sin_alpha = sin_theta_o;
+					tan_beta = sin_theta_i / cos_theta_i.abs();
+				} else {
+					sin_alpha = sin_theta_i;
+					tan_beta = sin_theta_o / cos_theta_o.abs();
 				}
 				return self.return_color(&color, lambda)
-					* constants::PI_INV * (a + b * cos_phi * alpha.sin() * beta.tan());
+					* constants::PI_INV * (a + b * max_cos * sin_alpha * tan_beta);
 			}
 			BxDF::Specular {} => 1.0
 		}

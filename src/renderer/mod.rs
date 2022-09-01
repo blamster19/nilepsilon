@@ -184,31 +184,27 @@ impl Renderer {
 					let mut contrib = self.integrate(next_ray, depth - 1, wavelengths, sampler);
 					let mut surface_response = algebra::WavelengthBunch(
 						object.material.return_scatter_radiance(
-							theta_i,
-							phi_i,
-							theta_o,
-							phi_o,
+							next_ray.dir,
+							ray.dir,
+							normal,
 							wavelengths.0,
 						),
 						object.material.return_scatter_radiance(
-							theta_i,
-							phi_i,
-							theta_o,
-							phi_o,
+							next_ray.dir,
+							ray.dir,
+							normal,
 							wavelengths.1,
 						),
 						object.material.return_scatter_radiance(
-							theta_i,
-							phi_i,
-							theta_o,
-							phi_o,
+							next_ray.dir,
+							ray.dir,
+							normal,
 							wavelengths.2,
 						),
 						object.material.return_scatter_radiance(
-							theta_i,
-							phi_i,
-							theta_o,
-							phi_o,
+							next_ray.dir,
+							ray.dir,
+							normal,
 							wavelengths.3,
 						),
 					);

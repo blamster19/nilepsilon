@@ -40,14 +40,13 @@ impl Material {
 
 	pub fn return_scatter_radiance(
 		&self,
-		theta_i: algebra::Scalar,
-		phi_i: algebra::Scalar,
-		theta_o: algebra::Scalar,
-		phi_o: algebra::Scalar,
+		incoming: algebra::Vector,
+		outgoing: algebra::Vector,
+		normal: algebra::Vector,
 		lambda: algebra::Scalar,
 	) -> algebra::Scalar {
 		self.bxdf
-			.compute_bxdf(theta_i, phi_i, theta_o, phi_o, lambda)
+			.compute_bxdf(incoming, outgoing, normal, lambda)
 	}
 
 	pub fn return_emission_radiance(&self, lambda: algebra::Scalar) -> algebra::Scalar {
@@ -80,17 +79,28 @@ impl Material {
 				random.1 * 2.0 * constants::PI
 			),
 			shaders::Lobe::Delta => (theta_i, phi_i + constants::PI),
+			shaders::Lobe::CT_GGX_reflect => {
+				if let shaders::BxDF::CT_GGX_reflect{ alpha, .. } = self.bxdf {
+					return (
+						(alpha * (random.0 / (1.0 - random.0)).sqrt()).atan(),
+						random.1 * 2.0 * constants::PI
+					);
+				} else {
+					return (theta_i, phi_i + constants::PI);
+				}
+			},
 		}
 	}
 
 	pub fn return_pdf(
 		&self,
-		incoming: algebra::Vector,
-		outgoing: algebra::Vector,
-		normal: algebra::Vector,
+		theta_i: algebra::Scalar,
+		phi_i: algebra::Scalar,
+		theta_o: algebra::Scalar,
+		phi_o: algebra::Scalar,
 		lambda: algebra::Scalar,
 	) -> algebra::Scalar {
-		self.bxdf.pdf(incoming, outgoing, normal, lambda)
+		self.bxdf.pdf(theta_i, phi_i, theta_o, phi_o, lambda)
 	}
 
 	pub fn new_basis(&self, normal: algebra::Vector) -> algebra::Basis {

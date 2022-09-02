@@ -18,7 +18,7 @@ pub enum EmissionType {
 #[derive(Clone, PartialEq)]
 pub enum SurfaceType {
 	Dielectric { sigma: algebra::Scalar, color: shaders::Color },
-	Conductor {},
+	Conductor { roughness: algebra::Scalar },
 }
 
 #[derive(Clone, PartialEq)]
@@ -33,7 +33,7 @@ impl Material {
 			emitter,
 			bxdf: match surface {
 				SurfaceType::Dielectric { sigma, color } => shaders::BxDF::oren_nayar(sigma, color),
-				SurfaceType::Conductor {} => shaders::BxDF::specular(),
+				SurfaceType::Conductor { roughness } => shaders::BxDF::ggx_reflect(roughness),
 			},
 		}
 	}
@@ -46,7 +46,7 @@ impl Material {
 		lambda: algebra::Scalar,
 	) -> algebra::Scalar {
 		self.bxdf
-			.compute_bxdf(incoming, outgoing, normal, lambda)
+			.compute_bxdf(incoming, -1.0 * outgoing, normal, lambda)
 	}
 
 	pub fn return_emission_radiance(&self, lambda: algebra::Scalar) -> algebra::Scalar {
@@ -79,8 +79,8 @@ impl Material {
 				random.1 * 2.0 * constants::PI
 			),
 			shaders::Lobe::Delta => (theta_i, phi_i + constants::PI),
-			shaders::Lobe::CT_GGX_reflect => {
-				if let shaders::BxDF::CT_GGX_reflect{ alpha, .. } = self.bxdf {
+			shaders::Lobe::GGX_reflect => {
+				if let shaders::BxDF::GGX_reflect{ alpha, .. } = self.bxdf {
 					return (
 						(alpha * (random.0 / (1.0 - random.0)).sqrt()).atan(),
 						random.1 * 2.0 * constants::PI
@@ -94,13 +94,12 @@ impl Material {
 
 	pub fn return_pdf(
 		&self,
-		theta_i: algebra::Scalar,
-		phi_i: algebra::Scalar,
-		theta_o: algebra::Scalar,
-		phi_o: algebra::Scalar,
+		incoming: algebra::Vector,
+		outgoing: algebra::Vector,
+		normal: algebra::Vector,
 		lambda: algebra::Scalar,
 	) -> algebra::Scalar {
-		self.bxdf.pdf(theta_i, phi_i, theta_o, phi_o, lambda)
+		self.bxdf.pdf(incoming, -1.0 * outgoing, normal, lambda)
 	}
 
 	pub fn new_basis(&self, normal: algebra::Vector) -> algebra::Basis {

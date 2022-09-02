@@ -7,6 +7,7 @@ pub type Color = Vec<algebra::Scalar>;
 pub enum Lobe {
 	Cosine,
 	Delta,
+	GGX_reflect,
 }
 
 #[derive(Clone, PartialEq)]
@@ -17,6 +18,10 @@ pub enum BxDF {
 		color: Color,
 	},
 	Specular {},
+	GGX_reflect {
+		alpha: algebra::Scalar,
+		alpha2: algebra::Scalar,
+	},
 }
 
 impl BxDF {
@@ -40,14 +45,21 @@ impl BxDF {
 		BxDF::Specular {}
 	}
 
+	pub fn ggx_reflect(roughness: algebra::Scalar) -> BxDF {
+		BxDF::GGX_reflect {
+			alpha: roughness.powi(2),
+			alpha2: roughness.powi(4),
+		}
+	}
+
 	pub fn lobe(&self) -> Lobe {
 		match self {
 			BxDF::OrenNayar { .. } => Lobe::Cosine,
 			BxDF::Specular {} => Lobe::Delta,
+			BxDF::GGX_reflect { .. } => Lobe::GGX_reflect,
 		}
 	}
 
-	// vectors in BSDF functions all point outward, but the outgoing vector is passed facing towards the shaded surface
 	pub fn compute_bxdf(
 		&self,
 		incoming: algebra::Vector,
@@ -85,21 +97,35 @@ impl BxDF {
 				return self.return_color(&color, lambda)
 					* constants::PI_INV * (a + b * max_cos * sin_alpha * tan_beta);
 			}
-			BxDF::Specular {} => 1.0
+			BxDF::Specular {} => 1.0,
+			BxDF::GGX_reflect { alpha2, .. } => {
+				let n1: algebra::Scalar = 1.0;
+				let n2: algebra::Scalar = 1.45;
+				let half_vec = (incoming + outgoing).normalize();
+				let denom = (incoming * normal) * (outgoing * normal);
+				0.25 *
+				self.d_ggx(half_vec, normal, *alpha2) *
+				self.g_ggx(incoming, outgoing, half_vec, normal, *alpha2) / denom
+			}
 		}
 	}
 
 	pub fn pdf(
 		&self,
-		theta_i: algebra::Scalar,
-		phi_i: algebra::Scalar,
-		theta_o: algebra::Scalar,
-		phi_o: algebra::Scalar,
+		incoming: algebra::Vector,
+		outgoing: algebra::Vector,
+		normal: algebra::Vector,
 		lambda: algebra::Scalar,
 	) -> algebra::Scalar {
 		match self {
-			BxDF::OrenNayar { .. } => theta_i.cos() * constants::PI_INV,
+			BxDF::OrenNayar { .. } => (normal * incoming).abs() * constants::PI_INV,
 			BxDF::Specular {} => 1.0,
+			BxDF::GGX_reflect { alpha2, .. } => {
+				let half_vec = (incoming + outgoing).normalize();
+				let clamp = |x| if x < 0.0 { 0.0 } else { x };
+				self.d_ggx(half_vec, normal, *alpha2) *
+			(normal * incoming).abs() * constants::PI_INV
+			},
 		}
 	}
 	fn return_color(&self, c: &Color, lambda: algebra::Scalar) -> algebra::Scalar {
@@ -114,5 +140,34 @@ impl BxDF {
 		} else {
 			return color;
 		}
+	}
+
+	fn d_ggx(&self, direction: algebra::Vector, normal: algebra::Vector,  alpha2: algebra::Scalar) -> algebra::Scalar {
+		let cos2_theta: algebra::Scalar = (normal * direction).powi(2);
+		let denom = (cos2_theta * (alpha2 - 1.0) + 1.0).powi(2);
+		alpha2 * constants::PI_INV / denom
+	}
+
+	fn g_ggx(&self, incoming: algebra::Vector, outgoing: algebra::Vector, half_vec: algebra::Vector, normal: algebra::Vector,  alpha2: algebra::Scalar) -> algebra::Scalar {
+		self.gp_ggx(incoming, half_vec, normal, alpha2) * self.gp_ggx(outgoing, half_vec, normal, alpha2)
+	}
+
+	fn gp_ggx(&self, direction: algebra::Vector, half_vec: algebra::Vector, normal: algebra::Vector,  alpha2: algebra::Scalar) -> algebra::Scalar {
+		let clamp = |x| if x < 0.0 { 0.0 } else { x };
+		let cos_theta = clamp(normal * direction);
+		let sqrterm = alpha2 + (1.0 - alpha2) * cos_theta.powi(2);
+		let denom = cos_theta + sqrterm.sqrt();
+		2.0 * cos_theta / denom
+	}
+	fn fresnel_schlick_dielectric(&self, n_1: algebra::Scalar, n_2: algebra::Scalar, outgoing: algebra::Vector, half_vec: algebra::Vector) -> algebra::Scalar {
+		let cos_theta = half_vec * outgoing;
+		let f_0 = ((n_1 - n_2) / (n_1 + n_2)).powi(2);
+		f_0 + (1.0 - f_0) * (1.0 - cos_theta).powi(5)
+	}
+
+	fn fresnel_conductor(&self, n: algebra::Scalar, k: algebra::Scalar, outgoing: algebra::Vector, half_vec: algebra::Vector) -> algebra::Scalar {
+		let cos_theta = outgoing * half_vec;
+		let denom = (n + 1.0).powi(2) + k * k;
+		((n - 1.0).powi(2) + 4.0 * n * (1.0 - cos_theta).powi(5) + k * k) / denom
 	}
 }

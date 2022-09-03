@@ -70,17 +70,41 @@ impl BxDF {
 		match self {
 			BxDF::OrenNayar { a, b, color } => {
 				let max = |a, b| if a - b > 0.0 { a } else { b };
-				let clamp = |x, a, b| if x < a { a } else if x > b { b } else { x };
+				let clamp = |x, a, b| {
+					if x < a {
+						a
+					} else if x > b {
+						b
+					} else {
+						x
+					}
+				};
 				let mut max_cos: algebra::Scalar = 0.0;
 				let cos_theta_i = incoming.z;
 				let cos_theta_o = outgoing.z;
 				let sin_theta_i = max(0.0, 1.0 - cos_theta_i.powi(2)).sqrt();
 				let sin_theta_o = max(0.0, 1.0 - cos_theta_o.powi(2)).sqrt();
 				if sin_theta_i > 1e-4 && sin_theta_o > 1e-4 {
-					let cos_phi_i = if sin_theta_i == 0.0 { 1.0 } else { clamp(incoming.x / sin_theta_i, -1.0, 1.0) };
-					let cos_phi_o = if sin_theta_o == 0.0 { 1.0 } else { clamp(outgoing.x / sin_theta_o, -1.0, 1.0) };
-					let sin_phi_i = if sin_theta_i == 0.0 { 0.0 } else { clamp(incoming.y / sin_theta_i, -1.0, 1.0) };
-					let sin_phi_o = if sin_theta_o == 0.0 { 0.0 } else { clamp(outgoing.y / sin_theta_o, -1.0, 1.0) };
+					let cos_phi_i = if sin_theta_i == 0.0 {
+						1.0
+					} else {
+						clamp(incoming.x / sin_theta_i, -1.0, 1.0)
+					};
+					let cos_phi_o = if sin_theta_o == 0.0 {
+						1.0
+					} else {
+						clamp(outgoing.x / sin_theta_o, -1.0, 1.0)
+					};
+					let sin_phi_i = if sin_theta_i == 0.0 {
+						0.0
+					} else {
+						clamp(incoming.y / sin_theta_i, -1.0, 1.0)
+					};
+					let sin_phi_o = if sin_theta_o == 0.0 {
+						0.0
+					} else {
+						clamp(outgoing.y / sin_theta_o, -1.0, 1.0)
+					};
 					let d_cos = cos_phi_i * cos_phi_o + sin_phi_i * sin_phi_o;
 					max_cos = max(0.0, d_cos);
 				}
@@ -103,9 +127,9 @@ impl BxDF {
 				let n2: algebra::Scalar = 1.45;
 				let half_vec = (incoming + outgoing).normalize();
 				let denom = (incoming * normal) * (outgoing * normal);
-				0.25 *
-				self.d_ggx(half_vec, normal, *alpha2) *
-				self.g_ggx(incoming, outgoing, half_vec, normal, *alpha2) / denom
+				0.25 * self.d_ggx(half_vec, normal, *alpha2)
+					* self.g_ggx(incoming, outgoing, half_vec, normal, *alpha2)
+					/ denom
 			}
 		}
 	}
@@ -123,9 +147,10 @@ impl BxDF {
 			BxDF::GGX_reflect { alpha2, .. } => {
 				let half_vec = (incoming + outgoing).normalize();
 				let clamp = |x| if x < 0.0 { 0.0 } else { x };
-				self.d_ggx(half_vec, normal, *alpha2) *
-			(normal * incoming).abs() * constants::PI_INV
-			},
+				self.d_ggx(half_vec, normal, *alpha2)
+					* (normal * incoming).abs()
+					* constants::PI_INV
+			}
 		}
 	}
 	fn return_color(&self, c: &Color, lambda: algebra::Scalar) -> algebra::Scalar {
@@ -142,30 +167,61 @@ impl BxDF {
 		}
 	}
 
-	fn d_ggx(&self, direction: algebra::Vector, normal: algebra::Vector,  alpha2: algebra::Scalar) -> algebra::Scalar {
+	fn d_ggx(
+		&self,
+		direction: algebra::Vector,
+		normal: algebra::Vector,
+		alpha2: algebra::Scalar,
+	) -> algebra::Scalar {
 		let cos2_theta: algebra::Scalar = (normal * direction).powi(2);
 		let denom = (cos2_theta * (alpha2 - 1.0) + 1.0).powi(2);
 		alpha2 * constants::PI_INV / denom
 	}
 
-	fn g_ggx(&self, incoming: algebra::Vector, outgoing: algebra::Vector, half_vec: algebra::Vector, normal: algebra::Vector,  alpha2: algebra::Scalar) -> algebra::Scalar {
-		self.gp_ggx(incoming, half_vec, normal, alpha2) * self.gp_ggx(outgoing, half_vec, normal, alpha2)
+	fn g_ggx(
+		&self,
+		incoming: algebra::Vector,
+		outgoing: algebra::Vector,
+		half_vec: algebra::Vector,
+		normal: algebra::Vector,
+		alpha2: algebra::Scalar,
+	) -> algebra::Scalar {
+		self.gp_ggx(incoming, half_vec, normal, alpha2)
+			* self.gp_ggx(outgoing, half_vec, normal, alpha2)
 	}
 
-	fn gp_ggx(&self, direction: algebra::Vector, half_vec: algebra::Vector, normal: algebra::Vector,  alpha2: algebra::Scalar) -> algebra::Scalar {
+	fn gp_ggx(
+		&self,
+		direction: algebra::Vector,
+		half_vec: algebra::Vector,
+		normal: algebra::Vector,
+		alpha2: algebra::Scalar,
+	) -> algebra::Scalar {
 		let clamp = |x| if x < 0.0 { 0.0 } else { x };
 		let cos_theta = clamp(normal * direction);
 		let sqrterm = alpha2 + (1.0 - alpha2) * cos_theta.powi(2);
 		let denom = cos_theta + sqrterm.sqrt();
 		2.0 * cos_theta / denom
 	}
-	fn fresnel_schlick_dielectric(&self, n_1: algebra::Scalar, n_2: algebra::Scalar, outgoing: algebra::Vector, half_vec: algebra::Vector) -> algebra::Scalar {
+	pub fn fresnel_schlick_dielectric(
+		&self,
+		n_1: algebra::Scalar,
+		n_2: algebra::Scalar,
+		outgoing: algebra::Vector,
+		half_vec: algebra::Vector,
+	) -> algebra::Scalar {
 		let cos_theta = half_vec * outgoing;
 		let f_0 = ((n_1 - n_2) / (n_1 + n_2)).powi(2);
 		f_0 + (1.0 - f_0) * (1.0 - cos_theta).powi(5)
 	}
 
-	fn fresnel_conductor(&self, n: algebra::Scalar, k: algebra::Scalar, outgoing: algebra::Vector, half_vec: algebra::Vector) -> algebra::Scalar {
+	pub fn fresnel_conductor(
+		&self,
+		n: algebra::Scalar,
+		k: algebra::Scalar,
+		outgoing: algebra::Vector,
+		half_vec: algebra::Vector,
+	) -> algebra::Scalar {
 		let cos_theta = outgoing * half_vec;
 		let denom = (n + 1.0).powi(2) + k * k;
 		((n - 1.0).powi(2) + 4.0 * n * (1.0 - cos_theta).powi(5) + k * k) / denom

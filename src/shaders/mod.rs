@@ -6,8 +6,9 @@ pub type Color = Vec<algebra::Scalar>;
 
 pub enum Lobe {
 	Cosine,
-	Delta,
+	DeltaReflect,
 	GGX_reflect,
+	DeltaRefract,
 }
 
 #[derive(Clone, PartialEq)]
@@ -18,6 +19,7 @@ pub enum BxDF {
 		color: Color,
 	},
 	Specular {},
+	SpecularRefract {},
 	GGX_reflect {
 		alpha: algebra::Scalar,
 		alpha2: algebra::Scalar,
@@ -45,6 +47,10 @@ impl BxDF {
 		BxDF::Specular {}
 	}
 
+	pub fn specular_refract() -> BxDF {
+		BxDF::SpecularRefract {}
+	}
+
 	pub fn ggx_reflect(roughness: algebra::Scalar) -> BxDF {
 		BxDF::GGX_reflect {
 			alpha: roughness.powi(2),
@@ -55,7 +61,8 @@ impl BxDF {
 	pub fn lobe(&self) -> Lobe {
 		match self {
 			BxDF::OrenNayar { .. } => Lobe::Cosine,
-			BxDF::Specular {} => Lobe::Delta,
+			BxDF::Specular {} => Lobe::DeltaReflect,
+			BxDF::SpecularRefract { .. } => Lobe::DeltaRefract,
 			BxDF::GGX_reflect { .. } => Lobe::GGX_reflect,
 		}
 	}
@@ -131,6 +138,7 @@ impl BxDF {
 					* self.g_ggx(incoming, outgoing, half_vec, normal, *alpha2)
 					/ denom
 			}
+			BxDF::SpecularRefract {} => 1.0,
 		}
 	}
 
@@ -151,6 +159,7 @@ impl BxDF {
 					* (normal * incoming).abs()
 					* constants::PI_INV
 			}
+			BxDF::SpecularRefract {} => 1.0,
 		}
 	}
 	fn return_color(&self, c: &Color, lambda: algebra::Scalar) -> algebra::Scalar {

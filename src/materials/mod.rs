@@ -21,6 +21,9 @@ pub enum SurfaceType {
 		color: shaders::Color,
 		roughness: algebra::Scalar,
 	},
+	DielectricTransparent {
+		roughness: algebra::Scalar,
+	},
 	Conductor {
 		roughness: algebra::Scalar,
 	},
@@ -29,6 +32,7 @@ pub enum SurfaceType {
 #[derive(Clone, PartialEq)]
 enum InternalType {
 	DielOpaq,
+	DielTrs,
 	Cond,
 }
 
@@ -66,6 +70,16 @@ impl Material {
 				k,
 				surface: InternalType::DielOpaq,
 			},
+			SurfaceType::DielectricTransparent { roughness } => Self {
+				emitter,
+				bxdf: vec![
+					shaders::BxDF::specular_refract(),
+					shaders::BxDF::ggx_reflect(roughness),
+				],
+				n,
+				k,
+				surface: InternalType::DielTrs,
+			},
 		}
 	}
 
@@ -83,6 +97,9 @@ impl Material {
 				let half_vec = (incoming + outgoing).normalize();
 				let f = self.bxdf[0].fresnel_schlick_dielectric(1.0, self.n, outgoing, half_vec);
 				diff * (1.0 - f) + glos * f
+			}
+			InternalType::DielTrs => {
+				return self.bxdf[0].compute_bxdf(incoming, -1.0 * outgoing, normal, lambda);
 			}
 			InternalType::Cond => {
 				let glos = self.bxdf[0].compute_bxdf(incoming, -1.0 * outgoing, normal, lambda);
@@ -119,7 +136,7 @@ impl Material {
 	) -> (algebra::Scalar, algebra::Scalar) {
 		match self.bxdf[0].lobe() {
 			shaders::Lobe::Cosine => (random.0.sqrt().acos(), random.1 * 2.0 * constants::PI),
-			shaders::Lobe::Delta => (theta_i, phi_i + constants::PI),
+			shaders::Lobe::DeltaReflect => (theta_i, phi_i + constants::PI),
 			shaders::Lobe::GGX_reflect => {
 				if let shaders::BxDF::GGX_reflect { alpha, .. } = self.bxdf[0] {
 					return (
@@ -129,6 +146,18 @@ impl Material {
 				} else {
 					return (theta_i, phi_i + constants::PI);
 				}
+			}
+			shaders::Lobe::DeltaRefract => {
+				let n1 = 1.0;
+				let n2 = 1.5;
+				return if theta_i < 0.5 * constants::PI {
+					(
+						constants::PI - (n1 * theta_i.sin() / n2).asin(),
+						phi_i + constants::PI,
+					)
+				} else {
+					((n2 * theta_i.sin() / n1).asin(), phi_i + constants::PI)
+				};
 			}
 		}
 	}

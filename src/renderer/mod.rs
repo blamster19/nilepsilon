@@ -172,14 +172,14 @@ impl Renderer {
 
 					// pick random direction
 					let rand_rays: Vec<(f64, f64)> = sampler.random_list_2d(1, 0.0, 1.0);
-					(theta_o, phi_o) =
+					(theta_i, phi_i) =
 						object
 							.material
-							.return_direction(theta_i, phi_i, rand_rays[0]);
+							.return_direction(theta_o, phi_o, rand_rays[0]);
 
 					let mut next_ray: ray::Ray = ray::Ray::new(
 						intersection,
-						basis.basis_to_world(basis.spherical_to_basis(theta_o, phi_o)),
+						basis.basis_to_world(basis.spherical_to_basis(theta_i, phi_i)),
 					);
 					let mut contrib = self.integrate(next_ray, depth - 1, wavelengths, sampler);
 					let mut surface_response = algebra::WavelengthBunch(

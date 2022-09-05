@@ -185,25 +185,25 @@ impl Renderer {
 					let mut surface_response = algebra::WavelengthBunch(
 						object.material.return_scatter_radiance(
 							next_ray.dir,
-							ray.dir,
+							-ray.dir,
 							normal,
 							wavelengths.0,
 						),
 						object.material.return_scatter_radiance(
 							next_ray.dir,
-							ray.dir,
+							-ray.dir,
 							normal,
 							wavelengths.1,
 						),
 						object.material.return_scatter_radiance(
 							next_ray.dir,
-							ray.dir,
+							-ray.dir,
 							normal,
 							wavelengths.2,
 						),
 						object.material.return_scatter_radiance(
 							next_ray.dir,
-							ray.dir,
+							-ray.dir,
 							normal,
 							wavelengths.3,
 						),
@@ -211,25 +211,25 @@ impl Renderer {
 					let mut sample_pdf_inv = algebra::WavelengthBunch(
 						1.0 / object.material.return_pdf(
 							next_ray.dir,
-							ray.dir,
+							-ray.dir,
 							normal,
 							wavelengths.0,
 						),
 						1.0 / object.material.return_pdf(
 							next_ray.dir,
-							ray.dir,
+							-ray.dir,
 							normal,
 							wavelengths.1,
 						),
 						1.0 / object.material.return_pdf(
 							next_ray.dir,
-							ray.dir,
+							-ray.dir,
 							normal,
 							wavelengths.2,
 						),
 						1.0 / object.material.return_pdf(
 							next_ray.dir,
-							ray.dir,
+							-ray.dir,
 							normal,
 							wavelengths.3,
 						),

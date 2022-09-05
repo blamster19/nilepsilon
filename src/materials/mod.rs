@@ -92,17 +92,17 @@ impl Material {
 	) -> algebra::Scalar {
 		match self.surface {
 			InternalType::DielOpaq => {
-				let diff = self.bxdf[0].compute_bxdf(incoming, -1.0 * outgoing, normal, lambda);
-				let glos = self.bxdf[1].compute_bxdf(incoming, -1.0 * outgoing, normal, lambda);
+				let diff = self.bxdf[0].compute_bxdf(incoming, outgoing, normal, lambda);
+				let glos = self.bxdf[1].compute_bxdf(incoming, outgoing, normal, lambda);
 				let half_vec = (incoming + outgoing).normalize();
 				let f = self.bxdf[0].fresnel_schlick_dielectric(1.0, self.n, outgoing, half_vec);
 				diff * (1.0 - f) + glos * f
 			}
 			InternalType::DielTrs => {
-				return self.bxdf[0].compute_bxdf(incoming, -1.0 * outgoing, normal, lambda);
+				return self.bxdf[0].compute_bxdf(incoming, outgoing, normal, lambda);
 			}
 			InternalType::Cond => {
-				let glos = self.bxdf[0].compute_bxdf(incoming, -1.0 * outgoing, normal, lambda);
+				let glos = self.bxdf[0].compute_bxdf(incoming, outgoing, normal, lambda);
 				let half_vec = (incoming + outgoing).normalize();
 				let f = self.bxdf[0].fresnel_conductor(self.n, self.k, outgoing, half_vec);
 				glos * f
@@ -169,7 +169,7 @@ impl Material {
 		normal: algebra::Vector,
 		lambda: algebra::Scalar,
 	) -> algebra::Scalar {
-		self.bxdf[0].pdf(incoming, -1.0 * outgoing, normal, lambda)
+		self.bxdf[0].pdf(incoming, outgoing, normal, lambda)
 	}
 
 	pub fn new_basis(&self, normal: algebra::Vector) -> algebra::Basis {

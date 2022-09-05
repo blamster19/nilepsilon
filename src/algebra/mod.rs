@@ -42,6 +42,18 @@ impl ops::Sub for Vector {
 	}
 }
 
+impl ops::Neg for Vector {
+	type Output = Self;
+
+	fn neg(self) -> Self {
+		Vector {
+			x: -self.x,
+			y: -self.y,
+			z: -self.z,
+		}
+	}
+}
+
 //scalar product
 impl ops::Mul<Vector> for Vector {
 	type Output = Scalar;

@@ -97,3 +97,26 @@ fn vector_normalize() {
 	let result = v1.normalize();
 	assert_eq!(result, v3);
 }
+
+#[test]
+fn basis() {
+	let b = algebra::Basis::new(
+		algebra::Vector::new(2.0, 1.0, 2.0) / 3.0,
+		algebra::Vector::new(-2.0, 2.0, 1.0) / 3.0,
+		algebra::Vector::new(1.0, 2.0, -2.0) / 3.0,
+	);
+	let v3 = algebra::Vector::new(10.0 / 3.0, 5.0 / 3.0, -1.0 / 3.0);
+	let result = b.world_to_basis(v1);
+	assert_eq!(true, (result - v3).norm() < 0.000000001);
+}
+
+#[test]
+fn spherical() {
+	let b = algebra::Basis::new(
+		algebra::Vector::new(1.0, 0.0, 0.0),
+		algebra::Vector::new(0.0, 1.0, 0.0),
+		algebra::Vector::new(0.0, 0.0, 1.0),
+	);
+	let result: (algebra::Scalar, algebra::Scalar) = b.basis_to_spherical(v1.normalize());
+	assert_eq!(result, (0.6405223126794245, 1.1071487177940904));
+}

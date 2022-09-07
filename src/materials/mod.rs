@@ -156,7 +156,12 @@ impl Material {
 						phi_i + constants::PI,
 					)
 				} else {
-					((n2 * theta_i.sin() / n1).asin(), phi_i + constants::PI)
+					let ratio = n2 * theta_i.sin() / n1;
+					if ratio >= -1.0 && ratio <= 1.0 {
+						(ratio.asin(), phi_i + constants::PI)
+					} else {
+						(theta_i, phi_i + constants::PI)
+					}
 				};
 			}
 		}

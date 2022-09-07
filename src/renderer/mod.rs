@@ -164,11 +164,12 @@ impl Renderer {
 					object.material.return_emission_radiance(wavelengths.3),
 				);
 				if depth > 0 {
-					let mut theta_o: algebra::Scalar = 0.0;
-					let mut phi_o: algebra::Scalar = 0.0;
-					let mut theta_i: algebra::Scalar = 0.0;
-					let mut phi_i: algebra::Scalar = 0.0;
+					let mut theta_o: algebra::Scalar;
+					let mut phi_o: algebra::Scalar;
+					let mut theta_i: algebra::Scalar;
+					let mut phi_i: algebra::Scalar;
 					let basis: algebra::Basis = object.material.new_basis(normal);
+					(theta_o, phi_o) = basis.basis_to_spherical(basis.world_to_basis(-ray.dir.normalize()));
 
 					// pick random direction
 					let rand_rays: Vec<(f64, f64)> = sampler.random_list_2d(1, 0.0, 1.0);

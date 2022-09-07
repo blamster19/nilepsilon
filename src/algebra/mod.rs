@@ -182,11 +182,35 @@ impl Basis {
 	pub fn basis_to_world(&self, vector: Vector) -> Vector {
 		self.u * vector.x + self.v * vector.y + self.w * vector.z
 	}
+	pub fn world_to_basis(&self, vector: Vector) -> Vector {
+		let a = Vector::new(self.u.x, self.v.x, self.w.x);
+		let b = Vector::new(self.u.y, self.v.y, self.w.y);
+		let c = Vector::new(self.u.z, self.v.z, self.w.z);
+		a * vector.x + b * vector.y + c * vector.z
+	}
 	pub fn spherical_to_basis(&self, theta: Scalar, phi: Scalar) -> Vector {
 		Vector::new(
 			phi.cos() * theta.sin(),
 			phi.sin() * theta.sin(),
 			theta.cos(),
 		)
+	}
+
+	pub fn basis_to_spherical(&self, vector: Vector) -> (Scalar, Scalar) {
+		let pi: Scalar = 3.1415926536;
+		let phi: Scalar = if vector.x > 0.0 {
+			(vector.y / vector.x).atan()
+		} else if vector.x < 0.0 && vector.y >= 0.0 {
+			(vector.y / vector.x).atan() + pi
+		} else if vector.x < 0.0 && vector.y < 0.0 {
+			(vector.y / vector.x).atan() - pi
+		} else if vector.x == 0.0 && vector.y > 0.0 {
+			0.5 * pi
+		} else if vector.x == 0.0 && vector.y < 0.0 {
+			-0.5 * pi
+		} else {
+			Scalar::NAN
+		};
+		(vector.z.acos(), phi)
 	}
 }

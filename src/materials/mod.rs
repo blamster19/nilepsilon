@@ -204,7 +204,6 @@ impl Material {
 		half_vec: algebra::Vector,
 		normal: algebra::Vector,
 		lambda: algebra::Scalar,
-		random: f64,
 	) -> algebra::Scalar {
 		match self.surface {
 			InternalType::DielOpaq => {

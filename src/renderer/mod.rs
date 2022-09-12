@@ -182,29 +182,34 @@ impl Renderer {
 						intersection,
 						basis.basis_to_world(basis.spherical_to_basis(theta_i, phi_i)),
 					);
+					let half_vec: algebra::Vector = (next_ray.dir - ray.dir).normalize();
 					let mut contrib = self.integrate(next_ray, depth - 1, wavelengths, sampler);
 					let mut surface_response = algebra::WavelengthBunch(
 						object.material.return_scatter_radiance(
 							next_ray.dir,
 							-ray.dir,
+							half_vec,
 							normal,
 							wavelengths.0,
 						),
 						object.material.return_scatter_radiance(
 							next_ray.dir,
 							-ray.dir,
+							half_vec,
 							normal,
 							wavelengths.1,
 						),
 						object.material.return_scatter_radiance(
 							next_ray.dir,
 							-ray.dir,
+							half_vec,
 							normal,
 							wavelengths.2,
 						),
 						object.material.return_scatter_radiance(
 							next_ray.dir,
 							-ray.dir,
+							half_vec,
 							normal,
 							wavelengths.3,
 						),
@@ -213,24 +218,28 @@ impl Renderer {
 						1.0 / object.material.return_pdf(
 							next_ray.dir,
 							-ray.dir,
+							half_vec,
 							normal,
 							wavelengths.0,
 						),
 						1.0 / object.material.return_pdf(
 							next_ray.dir,
 							-ray.dir,
+							half_vec,
 							normal,
 							wavelengths.1,
 						),
 						1.0 / object.material.return_pdf(
 							next_ray.dir,
 							-ray.dir,
+							half_vec,
 							normal,
 							wavelengths.2,
 						),
 						1.0 / object.material.return_pdf(
 							next_ray.dir,
 							-ray.dir,
+							half_vec,
 							normal,
 							wavelengths.3,
 						),

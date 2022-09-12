@@ -87,15 +87,15 @@ impl Material {
 		&self,
 		incoming: algebra::Vector,
 		outgoing: algebra::Vector,
+		half_vec: algebra::Vector,
 		normal: algebra::Vector,
 		lambda: algebra::Scalar,
 	) -> algebra::Scalar {
 		match self.surface {
 			InternalType::DielOpaq => {
+				let f = self.bxdf[0].fresnel_schlick_dielectric(1.0, self.n, outgoing, half_vec);
 				let diff = self.bxdf[0].compute_bxdf(incoming, outgoing, normal, lambda);
 				let glos = self.bxdf[1].compute_bxdf(incoming, outgoing, normal, lambda);
-				let half_vec = (incoming + outgoing).normalize();
-				let f = self.bxdf[0].fresnel_schlick_dielectric(1.0, self.n, outgoing, half_vec);
 				diff * (1.0 - f) + glos * f
 			}
 			InternalType::DielTrs => {
@@ -134,14 +134,42 @@ impl Material {
 		phi_i: algebra::Scalar,
 		random: (f64, f64),
 	) -> (algebra::Scalar, algebra::Scalar) {
-		match self.bxdf[0].lobe() {
-			shaders::Lobe::Cosine => (random.0.sqrt().acos(), random.1 * 2.0 * constants::PI),
+		match self.surface {
+			InternalType::DielOpaq => {
+				return self.evaluate_lobe(shaders::Lobe::Cosine, theta_i, phi_i, random);
+			}
+			InternalType::DielTrs => {
+				return self.evaluate_lobe(shaders::Lobe::DeltaRefract, theta_i, phi_i, random);
+			}
+			InternalType::Cond => {
+				return self.evaluate_lobe(shaders::Lobe::GGX_reflect, theta_i, phi_i, random);
+			}
+		}
+	}
+
+	fn evaluate_lobe(
+		&self,
+		lobe: shaders::Lobe,
+		theta_i: algebra::Scalar,
+		phi_i: algebra::Scalar,
+		random_dir: (f64, f64),
+	) -> (algebra::Scalar, algebra::Scalar) {
+		match lobe {
+			shaders::Lobe::Cosine => (
+				random_dir.0.sqrt().acos(),
+				random_dir.1 * 2.0 * constants::PI,
+			),
 			shaders::Lobe::DeltaReflect => (theta_i, phi_i + constants::PI),
 			shaders::Lobe::GGX_reflect => {
 				if let shaders::BxDF::GGX_reflect { alpha, .. } = self.bxdf[0] {
 					return (
-						(alpha * (random.0 / (1.0 - random.0)).sqrt()).atan(),
-						random.1 * 2.0 * constants::PI,
+						(alpha * (random_dir.0 / (1.0 - random_dir.0)).sqrt()).atan(),
+						random_dir.1 * 2.0 * constants::PI,
+					);
+				} else if let shaders::BxDF::GGX_reflect { alpha, .. } = self.bxdf[1] {
+					return (
+						(alpha * (random_dir.0 / (1.0 - random_dir.0)).sqrt()).atan(),
+						random_dir.1 * 2.0 * constants::PI,
 					);
 				} else {
 					return (theta_i, phi_i + constants::PI);
@@ -173,10 +201,22 @@ impl Material {
 		&self,
 		incoming: algebra::Vector,
 		outgoing: algebra::Vector,
+		half_vec: algebra::Vector,
 		normal: algebra::Vector,
 		lambda: algebra::Scalar,
+		random: f64,
 	) -> algebra::Scalar {
-		self.bxdf[0].pdf(incoming, outgoing, normal, lambda)
+		match self.surface {
+			InternalType::DielOpaq => {
+				return self.bxdf[0].pdf(incoming, outgoing, normal, lambda);
+			}
+			InternalType::DielTrs => {
+				return self.bxdf[0].pdf(incoming, outgoing, normal, lambda);
+			}
+			InternalType::Cond => {
+				return self.bxdf[0].pdf(incoming, outgoing, normal, lambda);
+			}
+		}
 	}
 
 	pub fn new_basis(&self, normal: algebra::Vector) -> algebra::Basis {

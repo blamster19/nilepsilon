@@ -7,7 +7,7 @@ pub type Color = Vec<algebra::Scalar>;
 pub enum Lobe {
 	Cosine,
 	DeltaReflect,
-	GGX_reflect,
+	GGX_reflect { alpha: algebra::Scalar },
 	DeltaRefract,
 }
 
@@ -63,7 +63,7 @@ impl BxDF {
 			BxDF::OrenNayar { .. } => Lobe::Cosine,
 			BxDF::Specular {} => Lobe::DeltaReflect,
 			BxDF::SpecularRefract { .. } => Lobe::DeltaRefract,
-			BxDF::GGX_reflect { .. } => Lobe::GGX_reflect,
+			BxDF::GGX_reflect { alpha, .. } => Lobe::GGX_reflect { alpha: *alpha },
 		}
 	}
 
@@ -235,4 +235,46 @@ impl BxDF {
 		let denom = (n + 1.0).powi(2) + k * k;
 		((n - 1.0).powi(2) + 4.0 * n * (1.0 - cos_theta).powi(5) + k * k) / denom
 	}
+}
+
+impl Lobe {
+	pub fn evaluate_lobe(
+		lobe: Self,
+		theta_i: algebra::Scalar,
+		phi_i: algebra::Scalar,
+		random_dir: (f64, f64),
+	) -> (algebra::Scalar, algebra::Scalar) {
+		match lobe {
+			Self::Cosine => (
+				random_dir.0.sqrt().acos(),
+				random_dir.1 * 2.0 * constants::PI,
+			),
+			Self::DeltaReflect => (theta_i, phi_i + constants::PI),
+			Self::GGX_reflect { alpha } =>
+					(
+						(alpha * (random_dir.0 / (1.0 - random_dir.0)).sqrt()).atan(),
+						random_dir.1 * 2.0 * constants::PI,
+					),
+			Self::DeltaRefract => {
+				let n1 = 1.0;
+				let n2 = 1.5;
+				return if theta_i < 0.5 * constants::PI {
+					let ratio = n1 * theta_i.sin() / n2;
+					if ratio >= -1.0 && ratio <= 1.0 {
+						(constants::PI - ratio.asin(), phi_i + constants::PI)
+					} else {
+						(theta_i, phi_i + constants::PI)
+					}
+				} else {
+					let ratio = n2 * (constants::PI - theta_i).sin() / n1;
+					if ratio >= -1.0 && ratio <= 1.0 {
+						(ratio.asin(), phi_i + constants::PI)
+					} else {
+						(theta_i, phi_i + constants::PI)
+					}
+				};
+			}
+		}
+	}
+
 }

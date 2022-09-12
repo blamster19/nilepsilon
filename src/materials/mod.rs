@@ -136,64 +136,34 @@ impl Material {
 	) -> (algebra::Scalar, algebra::Scalar) {
 		match self.surface {
 			InternalType::DielOpaq => {
-				return self.evaluate_lobe(shaders::Lobe::Cosine, theta_i, phi_i, random);
+				return shaders::Lobe::evaluate_lobe(shaders::Lobe::Cosine, theta_i, phi_i, random);
 			}
 			InternalType::DielTrs => {
-				return self.evaluate_lobe(shaders::Lobe::DeltaRefract, theta_i, phi_i, random);
+				return shaders::Lobe::evaluate_lobe(
+					shaders::Lobe::DeltaRefract,
+					theta_i,
+					phi_i,
+					random,
+				);
 			}
-			InternalType::Cond => {
-				return self.evaluate_lobe(shaders::Lobe::GGX_reflect, theta_i, phi_i, random);
-			}
-		}
-	}
-
-	fn evaluate_lobe(
-		&self,
-		lobe: shaders::Lobe,
-		theta_i: algebra::Scalar,
-		phi_i: algebra::Scalar,
-		random_dir: (f64, f64),
-	) -> (algebra::Scalar, algebra::Scalar) {
-		match lobe {
-			shaders::Lobe::Cosine => (
-				random_dir.0.sqrt().acos(),
-				random_dir.1 * 2.0 * constants::PI,
-			),
-			shaders::Lobe::DeltaReflect => (theta_i, phi_i + constants::PI),
-			shaders::Lobe::GGX_reflect => {
-				if let shaders::BxDF::GGX_reflect { alpha, .. } = self.bxdf[0] {
-					return (
-						(alpha * (random_dir.0 / (1.0 - random_dir.0)).sqrt()).atan(),
-						random_dir.1 * 2.0 * constants::PI,
-					);
-				} else if let shaders::BxDF::GGX_reflect { alpha, .. } = self.bxdf[1] {
-					return (
-						(alpha * (random_dir.0 / (1.0 - random_dir.0)).sqrt()).atan(),
-						random_dir.1 * 2.0 * constants::PI,
-					);
-				} else {
-					return (theta_i, phi_i + constants::PI);
+			InternalType::Cond => match self.bxdf[0] {
+				shaders::BxDF::GGX_reflect { alpha, .. } => {
+					return shaders::Lobe::evaluate_lobe(
+						shaders::Lobe::GGX_reflect { alpha },
+						theta_i,
+						phi_i,
+						random,
+					)
 				}
-			}
-			shaders::Lobe::DeltaRefract => {
-				let n1 = 1.0;
-				let n2 = 1.5;
-				return if theta_i < 0.5 * constants::PI {
-					let ratio = n1 * theta_i.sin() / n2;
-					if ratio >= -1.0 && ratio <= 1.0 {
-						(constants::PI - ratio.asin(), phi_i + constants::PI)
-					} else {
-						(theta_i, phi_i + constants::PI)
-					}
-				} else {
-					let ratio = n2 * (constants::PI - theta_i).sin() / n1;
-					if ratio >= -1.0 && ratio <= 1.0 {
-						(ratio.asin(), phi_i + constants::PI)
-					} else {
-						(theta_i, phi_i + constants::PI)
-					}
-				};
-			}
+				_ => {
+					return shaders::Lobe::evaluate_lobe(
+						shaders::Lobe::DeltaReflect,
+						theta_i,
+						phi_i,
+						random,
+					)
+				}
+			},
 		}
 	}
 

@@ -74,6 +74,7 @@ impl BxDF {
 		normal: algebra::Vector,
 		lambda: algebra::Scalar,
 	) -> algebra::Scalar {
+		let zero_clamp = |x| if x < 0.0 { 0.0 } else { x };
 		match self {
 			BxDF::OrenNayar { a, b, color } => {
 				let max = |a, b| if a - b > 0.0 { a } else { b };
@@ -133,7 +134,8 @@ impl BxDF {
 				let n1: algebra::Scalar = 1.0;
 				let n2: algebra::Scalar = 1.45;
 				let half_vec = (incoming + outgoing).normalize();
-				let denom = (incoming * normal) * (outgoing * normal);
+				// https://cseweb.ucsd.edu/~tzli/cse272/homework1.pdf
+				let denom = (incoming * normal);
 				0.25 * self.d_ggx(half_vec, normal, *alpha2)
 					* self.g_ggx(incoming, outgoing, half_vec, normal, *alpha2)
 					/ denom
@@ -149,15 +151,14 @@ impl BxDF {
 		normal: algebra::Vector,
 		lambda: algebra::Scalar,
 	) -> algebra::Scalar {
+		let clamp = |x| if x < 0.0 { 0.0 } else { x };
 		match self {
-			BxDF::OrenNayar { .. } => (normal * incoming).abs() * constants::PI_INV,
+			BxDF::OrenNayar { .. } => clamp(normal * incoming).abs() * constants::PI_INV,
 			BxDF::Specular {} => 1.0,
 			BxDF::GGX_reflect { alpha2, .. } => {
 				let half_vec = (incoming + outgoing).normalize();
-				let clamp = |x| if x < 0.0 { 0.0 } else { x };
-				self.d_ggx(half_vec, normal, *alpha2)
-					* (normal * incoming).abs()
-					* constants::PI_INV
+				let denom = (half_vec * incoming).abs() * (half_vec * outgoing).abs();
+				self.d_ggx(half_vec, normal, *alpha2) * (half_vec * normal).abs() * 0.25 / denom
 			}
 			BxDF::SpecularRefract {} => 1.0,
 		}
@@ -208,6 +209,7 @@ impl BxDF {
 	) -> algebra::Scalar {
 		let clamp = |x| if x < 0.0 { 0.0 } else { x };
 		let cos_theta = clamp(normal * direction);
+		// https://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
 		let sqrterm = alpha2 + (1.0 - alpha2) * cos_theta.powi(2);
 		let denom = cos_theta + sqrterm.sqrt();
 		2.0 * cos_theta / denom
@@ -250,11 +252,10 @@ impl Lobe {
 				random_dir.1 * 2.0 * constants::PI,
 			),
 			Self::DeltaReflect => (theta_i, phi_i + constants::PI),
-			Self::GGX_reflect { alpha } =>
-					(
-						(alpha * (random_dir.0 / (1.0 - random_dir.0)).sqrt()).atan(),
-						random_dir.1 * 2.0 * constants::PI,
-					),
+			Self::GGX_reflect { alpha } => (
+				(alpha * (random_dir.0 / (1.0 - random_dir.0)).sqrt()).atan(),
+				random_dir.1 * 2.0 * constants::PI,
+			),
 			Self::DeltaRefract => {
 				let n1 = 1.0;
 				let n2 = 1.5;
@@ -276,5 +277,4 @@ impl Lobe {
 			}
 		}
 	}
-
 }

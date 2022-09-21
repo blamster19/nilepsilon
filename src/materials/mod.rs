@@ -135,9 +135,36 @@ impl Material {
 		random: (f64, f64),
 	) -> (algebra::Scalar, algebra::Scalar) {
 		match self.surface {
-			InternalType::DielOpaq => {
-				return shaders::Lobe::evaluate_lobe(shaders::Lobe::Cosine, theta_i, phi_i, random);
-			}
+			InternalType::DielOpaq => match self.bxdf[1] {
+				shaders::BxDF::GGX_reflect { alpha, .. } => {
+					let mut u = random.0;
+					if u < 0.5 {
+						u = 2.0 * random.0;
+						return shaders::Lobe::evaluate_lobe(
+							shaders::Lobe::Cosine,
+							theta_i,
+							phi_i,
+							(u, random.1),
+						);
+					} else {
+						u = 2.0 * (random.0 - 0.5);
+						return shaders::Lobe::evaluate_lobe(
+							shaders::Lobe::GGX_reflect { alpha },
+							theta_i,
+							phi_i,
+							(u, random.1),
+						);
+					}
+				}
+				_ => {
+					return shaders::Lobe::evaluate_lobe(
+						shaders::Lobe::Cosine,
+						theta_i,
+						phi_i,
+						random,
+					)
+				}
+			},
 			InternalType::DielTrs => {
 				return shaders::Lobe::evaluate_lobe(
 					shaders::Lobe::DeltaRefract,
@@ -177,7 +204,9 @@ impl Material {
 	) -> algebra::Scalar {
 		match self.surface {
 			InternalType::DielOpaq => {
-				return self.bxdf[0].pdf(incoming, outgoing, normal, lambda);
+				return 0.5
+					* (self.bxdf[0].pdf(incoming, outgoing, normal, lambda)
+						+ self.bxdf[1].pdf(incoming, outgoing, normal, lambda));
 			}
 			InternalType::DielTrs => {
 				return self.bxdf[0].pdf(incoming, outgoing, normal, lambda);

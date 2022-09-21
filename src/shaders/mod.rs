@@ -135,7 +135,7 @@ impl BxDF {
 				let n2: algebra::Scalar = 1.45;
 				let half_vec = (incoming + outgoing).normalize();
 				// https://cseweb.ucsd.edu/~tzli/cse272/homework1.pdf
-				let denom = (incoming * normal);
+				let denom = incoming * normal;
 				0.25 * self.d_ggx(half_vec, normal, *alpha2)
 					* self.g_ggx(incoming, outgoing, half_vec, normal, *alpha2)
 					/ denom

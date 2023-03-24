@@ -25,4 +25,4 @@ $ cargo test [test name] --release -- --nocapture >> filename.ppm
 ```
 After waiting for render to finish, delete unnecessary std lines that got caught up in the output file.
 
-![Sample](./sampleimage.ppm "Sample image output of `renderer_cornell_2` test")
+![Sample](./sampleimage.jpg "Sample image output of `renderer_cornell_2` test")

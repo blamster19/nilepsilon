@@ -157,19 +157,21 @@ impl Renderer {
 					.return_radiance(ray.dir, wavelengths.3),
 			),
 			std::option::Option::Some(object) => {
-				let mut radiance = algebra::WavelengthBunch(
-					object.material.return_emission_radiance(wavelengths.0),
-					object.material.return_emission_radiance(wavelengths.1),
-					object.material.return_emission_radiance(wavelengths.2),
-					object.material.return_emission_radiance(wavelengths.3),
-				);
+			let mut radiance = algebra::WavelengthBunch(0.0, 0.0, 0.0, 0.0);
+			//	let mut radiance = algebra::WavelengthBunch(
+			//		object.material.return_emission_radiance(wavelengths.0),
+			//		object.material.return_emission_radiance(wavelengths.1),
+			//		object.material.return_emission_radiance(wavelengths.2),
+			//		object.material.return_emission_radiance(wavelengths.3),
+			//	);
 				if depth > 0 {
 					let mut theta_o: algebra::Scalar;
 					let mut phi_o: algebra::Scalar;
 					let mut theta_i: algebra::Scalar;
 					let mut phi_i: algebra::Scalar;
 					let basis: algebra::Basis = object.material.new_basis(normal);
-					(theta_o, phi_o) = basis.basis_to_spherical(basis.world_to_basis(-ray.dir.normalize()));
+					(theta_o, phi_o) =
+						basis.basis_to_spherical(basis.world_to_basis(-ray.dir.normalize()));
 
 					// pick random direction
 					let rand_rays: Vec<(f64, f64)> = sampler.random_list_2d(1, 0.0, 1.0);
@@ -184,6 +186,14 @@ impl Renderer {
 					);
 					let half_vec: algebra::Vector = (next_ray.dir - ray.dir).normalize();
 					let mut contrib = self.integrate(next_ray, depth - 1, wavelengths, sampler);
+				
+				radiance = algebra::WavelengthBunch(
+					object.material.return_emission_radiance(next_ray.dir, -ray.dir, half_vec, normal, wavelengths.0),
+					object.material.return_emission_radiance(next_ray.dir, -ray.dir, half_vec, normal, wavelengths.1),
+					object.material.return_emission_radiance(next_ray.dir, -ray.dir, half_vec, normal, wavelengths.2),
+					object.material.return_emission_radiance(next_ray.dir, -ray.dir, half_vec, normal, wavelengths.3),
+				);
+					
 					let mut surface_response = algebra::WavelengthBunch(
 						object.material.return_scatter_radiance(
 							next_ray.dir,

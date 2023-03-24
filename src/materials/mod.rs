@@ -13,6 +13,7 @@ pub enum EmissionType {
 		temperature: algebra::Scalar,
 		power: algebra::Scalar,
 	},
+	Fresnel,
 }
 
 #[derive(Clone, PartialEq)]
@@ -99,7 +100,10 @@ impl Material {
 				diff * (1.0 - f) + glos * f
 			}
 			InternalType::DielTrs => {
-				return self.bxdf[0].compute_bxdf(incoming, outgoing, normal, lambda);
+				let f = self.bxdf[0].fresnel_schlick_dielectric(1.0, self.n, outgoing, half_vec);
+				let trs = self.bxdf[0].compute_bxdf(incoming, outgoing, normal, lambda);
+				let glos = self.bxdf[1].compute_bxdf(incoming, outgoing, normal, lambda);
+				trs * (1.0 - f) + glos * f
 			}
 			InternalType::Cond => {
 				let glos = self.bxdf[0].compute_bxdf(incoming, outgoing, normal, lambda);
@@ -110,7 +114,14 @@ impl Material {
 		}
 	}
 
-	pub fn return_emission_radiance(&self, lambda: algebra::Scalar) -> algebra::Scalar {
+	pub fn return_emission_radiance(&self,
+		
+		incoming: algebra::Vector,
+		outgoing: algebra::Vector,
+		half_vec: algebra::Vector,
+		normal: algebra::Vector,
+
+	lambda: algebra::Scalar) -> algebra::Scalar {
 		match self.emitter {
 			EmissionType::NonEmissive => 0.0,
 			EmissionType::Incandescent { temperature } => {
@@ -124,6 +135,10 @@ impl Material {
 					/ (constants::TWO_HC2
 						/ (lmax.powi(5) * ((constants::HC_BY_K / lmax / temperature).exp() - 1.0)))
 					* power
+			}
+			EmissionType::Fresnel => {
+				//10.0 * self.bxdf[0].fresnel_schlick_dielectric(1.0, self.n, outgoing, half_vec)
+				outgoing * half_vec
 			}
 		}
 	}
@@ -173,6 +188,36 @@ impl Material {
 					random,
 				);
 			}
+			InternalType::DielTrs => match self.bxdf[1] {
+				shaders::BxDF::GGX_reflect { alpha, .. } => {
+					let mut u = random.0;
+					if u < 0.5 {
+						u = 2.0 * random.0;
+						return shaders::Lobe::evaluate_lobe(
+							shaders::Lobe::Cosine,
+							theta_i,
+							phi_i,
+							(u, random.1),
+						);
+					} else {
+						u = 2.0 * (random.0 - 0.5);
+						return shaders::Lobe::evaluate_lobe(
+							shaders::Lobe::DeltaRefract,
+							theta_i,
+							phi_i,
+							(u, random.1),
+						);
+					}
+				}
+				_ => {
+					return shaders::Lobe::evaluate_lobe(
+						shaders::Lobe::DeltaRefract,
+						theta_i,
+						phi_i,
+						random,
+					)
+				}
+			},
 			InternalType::Cond => match self.bxdf[0] {
 				shaders::BxDF::GGX_reflect { alpha, .. } => {
 					return shaders::Lobe::evaluate_lobe(
@@ -209,7 +254,10 @@ impl Material {
 						+ self.bxdf[1].pdf(incoming, outgoing, normal, lambda));
 			}
 			InternalType::DielTrs => {
-				return self.bxdf[0].pdf(incoming, outgoing, normal, lambda);
+				//return self.bxdf[0].pdf(incoming, outgoing, normal, lambda);
+				return 0.5
+					* (self.bxdf[0].pdf(incoming, outgoing, normal, lambda)
+						+ self.bxdf[1].pdf(incoming, outgoing, normal, lambda));
 			}
 			InternalType::Cond => {
 				return self.bxdf[0].pdf(incoming, outgoing, normal, lambda);

@@ -26,3 +26,19 @@ $ cargo test [test name] --release -- --nocapture >> filename.ppm
 After waiting for render to finish, delete unnecessary std lines that got caught up in the output file.
 
 ![Sample](./sampleimage.jpg "Sample image output of `renderer_cornell_2` test")
+
+### Things worth mentioning
+
+* currently the engine represents material colors as reflectance polynomials over the visible spectrum
+* the only available primitives are planes, spheres and triangles
+* only mesh lights and background lights are available
+* the only working shaders are Oren-Nayar diffuse and GGX glossy
+* _nilepsilon_ is a summer project and that's why it's not active for the rest of the year
+
+### References and inspiration
+
+[My first path tracer](https://alexanderameye.github.io/notes/path-tracer/)
+[Ray Tracing in One Weekend](https://raytracing.github.io/)
+[Physically Based Rendering, 3rd ed.](http://www.pbr-book.org/)
+[Scratchapixel](https://www.scratchapixel.com/)
+[Tzu-Mao Li's course notes](https://cseweb.ucsd.edu/~tzli/cse272/wi2023/)

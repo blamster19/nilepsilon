@@ -38,7 +38,11 @@ After waiting for render to finish, delete unnecessary std lines that got caught
 ### References and inspiration
 
 [My first path tracer](https://alexanderameye.github.io/notes/path-tracer/)
+
 [Ray Tracing in One Weekend](https://raytracing.github.io/)
+
 [Physically Based Rendering, 3rd ed.](http://www.pbr-book.org/)
+
 [Scratchapixel](https://www.scratchapixel.com/)
+
 [Tzu-Mao Li's course notes](https://cseweb.ucsd.edu/~tzli/cse272/wi2023/)
